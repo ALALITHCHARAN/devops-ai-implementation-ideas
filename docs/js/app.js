@@ -583,7 +583,7 @@
     });
   }
 
-  /* ---------- idea atlas (50-cell mosaic, colored by area) ---------- */
+  /* ---------- idea atlas (60-cell mosaic, colored by area) ---------- */
 
   var AREA_COLORS = {
     "CI/CD": "ac-teal",

@@ -9201,5 +9201,1834 @@ window.IDEAS = [
       "Start as pure enrichment (idea 30) and grow into the full copilot as trust data accumulates."
     ],
     "schema": "{\n  \"copilot_session_id\": \"oncall-session-2026-10-06-0042\",\n  \"incident_reference\": \"INC-84920\",\n  \"alert_context\": {\n    \"alert_name\": \"KafkaConsumerGroupLagSurge\",\n    \"affected_service\": \"order-event-worker\",\n    \"severity\": \"SEV-1\",\n    \"current_lag_messages\": 384000\n  },\n  \"autonomous_pre_investigation\": {\n    \"duration_seconds\": 22,\n    \"telemetry_findings\": \"Worker pods CPU utilization normal (42%), but thread dump indicates 95% of worker threads blocked in WAITING state on RDS Aurora write lock.\",\n    \"root_cause_hypothesis\": \"Unindexed transaction table query in migration 0089 holding exclusive table lock on orders table.\"\n  },\n  \"conversational_actions_executed\": [\n    {\n      \"operator_prompt\": \"Check RDS active locks on db-orders-aurora\",\n      \"tool_used\": \"aws_rds_describe_db_instances\",\n      \"summary\": \"Aurora PostgreSQL instance db-orders-aurora write latency spiked to 480ms with 18 active table lock waits.\"\n    }\n  ],\n  \"supervised_mitigation_plan\": {\n    \"action_tier\": \"PRE_APPROVED_RUNBOOK\",\n    \"runbook_name\": \"Cancel Long-Running Database Lock Query\",\n    \"sanctioned_command\": \"SELECT pg_cancel_backend(pid) FROM pg_stat_activity WHERE query LIKE '%ALTER TABLE orders ADD CONSTRAINT%' AND state = 'active';\",\n    \"safety_checks_passed\": true,\n    \"approval_status\": \"APPROVED_BY_OPERATOR\",\n    \"execution_audit_id\": \"AUDIT-K8S-OPS-91823\"\n  },\n  \"shift_handover_summary\": \"Mitigated Sev-1 Kafka consumer lag surge on order-event-worker by terminating blocking DDL query on RDS Aurora. Action items filed under INFRA-4891.\"\n}"
+  },
+  {
+    "num": 51,
+    "slug": "ai-runbook-generator",
+    "name": "AI Runbook Generator",
+    "area": "Developer Experience",
+    "tldr": "Turn tribal incident knowledge into living runbooks: generated from real incidents, telemetry, and topology, and kept current instead of rotting in the wiki.",
+    "complexity": "Medium",
+    "automation": "Assistive",
+    "problem_intro": "When something breaks, the fastest path to recovery is a runbook — and the most common state of a runbook is missing, stale, or written for an architecture that no longer exists.",
+    "problem": [
+      "Runbooks are written under pressure (or not at all) and describe yesterday's architecture, commands, and dashboards.",
+      "The person who knows the fix is the person who is on vacation; institutional knowledge leaves with them.",
+      "Stale runbooks are actively dangerous: wrong commands, renamed services, dashboards that 404 mid-incident.",
+      "Writing and maintaining runbooks for every service is nobody's day job, so coverage decays."
+    ],
+    "impact": "Every missing or stale runbook converts a five-minute fix into an hour of archaeology, and on-call quality quietly depends on who happens to remember.",
+    "capabilities": [
+      [
+        "Runbook synthesis",
+        "drafts detection → diagnosis → mitigation → escalation runbooks from incident history, telemetry, and service topology"
+      ],
+      [
+        "Incident mining",
+        "extracts what actually worked from postmortems, incident threads, and the PRs that fixed things"
+      ],
+      [
+        "Architecture grounding",
+        "binds steps to the dashboards, commands, and owners that exist today; flags references to the renamed or deleted"
+      ],
+      [
+        "Drift detection",
+        "re-validates runbooks on deploys and topology changes, proposing updates for stale steps"
+      ],
+      [
+        "Executable steps",
+        "renders steps as copy-paste commands with links to live dashboards and queries"
+      ]
+    ],
+    "solution": "A runbook service that sits next to your observability and incident stack: it drafts runbooks per service and failure mode from real incident data (postmortems, timelines, the queries and commands that actually got used), keeps them grounded in the current architecture via the service catalog (idea 49), and re-checks them when topology or tooling changes. Output lands next to the service or in the wiki as markdown — reviewable in PRs, rendered everywhere.",
+    "steps": [
+      [
+        "Ingest",
+        "collect incident history, postmortems, alert definitions, service topology, and dashboard inventory"
+      ],
+      [
+        "Draft",
+        "per service and failure mode, generate runbook structure: detection, diagnosis, mitigation, escalation"
+      ],
+      [
+        "Ground",
+        "bind steps to real commands, dashboards, queries, and owners; validate that links and commands exist"
+      ],
+      [
+        "Review",
+        "service owner reviews and merges via PR; edits feed back as preferences"
+      ],
+      [
+        "Maintain",
+        "on deploys or topology changes, re-validate and propose updates for drifted steps"
+      ]
+    ],
+    "hitl": "Every runbook is PR-reviewed by the service owner before publication; the AI drafts and re-validates, humans own accuracy.",
+    "components": [
+      [
+        "Ingestion collectors",
+        "postmortems, incident channels, alert definitions, service catalog, dashboards"
+      ],
+      [
+        "Runbook composer",
+        "LLM drafting with a strict runbook schema and house style"
+      ],
+      [
+        "Grounding validator",
+        "checks commands, dashboard links, alert names, and owners against live systems"
+      ],
+      [
+        "Drift watcher",
+        "re-runs validation on deploys and topology changes; files update PRs"
+      ]
+    ],
+    "flow": [
+      "A service is onboarded by pointing the tool at its catalog entry, repo, dashboards, and incident history.",
+      "The composer drafts runbooks for the service's real failure modes, mined from past incidents.",
+      "The grounding validator rewrites generic steps into the org's actual commands, queries, and links.",
+      "Owners review via PR; the drift watcher keeps every runbook honest as the system changes."
+    ],
+    "platforms": [
+      [
+        "RAG stack",
+        "pgvector · Qdrant · Weaviate · OpenSearch k-NN; embeddings from OpenAI, Cohere Embed, or open BGE-M3",
+        "retrieval over runbooks, docs, wikis, past incidents, and changelogs"
+      ],
+      [
+        "Cost-efficient model tiers",
+        "GPT-5 Mini/Nano · Claude Haiku 4.5 · Gemini Flash · DeepSeek V4 · Mistral Small",
+        "high-volume events (every failure, every alert) at a fraction of frontier cost"
+      ],
+      [
+        "Frontier cloud models",
+        "OpenAI GPT-5.x · Anthropic Claude Opus/Sonnet 4.x · Google Gemini 3 Pro · xAI Grok · Z.ai GLM",
+        "deep reasoning over the assembled context; strongest for root-cause analysis and fix suggestions"
+      ],
+      [
+        "AI observability & evaluation",
+        "Langfuse · Arize Phoenix · LangSmith · W&B Weave · OpenTelemetry GenAI conventions · promptfoo",
+        "tracing of every model and tool call, cost/latency tracking, prompt regression evals"
+      ]
+    ],
+    "integrations": [
+      [
+        "Postmortem & incident tools",
+        "source material: what happened and what fixed it"
+      ],
+      [
+        "Service catalog (Backstage etc.)",
+        "per-service runbook binding and ownership"
+      ],
+      [
+        "Grafana / Prometheus / Loki",
+        "live dashboard and query links per step"
+      ],
+      [
+        "GitHub / GitLab",
+        "runbooks as code, PR review, drift updates"
+      ],
+      [
+        "PagerDuty / Opsgenie",
+        "link runbooks to alerts so pages arrive with the right doc"
+      ]
+    ],
+    "context": [
+      "incident and postmortem history",
+      "service topology and ownership",
+      "alert definitions and thresholds",
+      "dashboard and query inventory",
+      "existing runbooks and wiki pages"
+    ],
+    "tools": [
+      "Read-only: incident/postmortem APIs, service catalog, dashboard inventory, alert definitions",
+      "Write tier: PR creation to the runbook repository (human-reviewed)"
+    ],
+    "benefits": [
+      "Runbook coverage for every service, without a side project dying for it.",
+      "Runbooks that reference what exists today — commands, dashboards, and owners validated, not remembered.",
+      "Pages arrive with the right runbook attached, cutting time-to-mitigation.",
+      "Institutional knowledge survives attrition."
+    ],
+    "security": [
+      "Incident channels and postmortems contain sensitive detail: redact secrets/PII before any model call; prefer in-VPC or open-weight models for raw transcripts.",
+      "Runbook PRs are reviewed like code; generated commands pass destructive-pattern lint before anyone copies them.",
+      "Read-only everywhere except the PR write path; no direct edits to wikis."
+    ],
+    "future": [
+      "Runbook rehearsal: pair with chaos experiments (idea 58) to verify steps actually work.",
+      "Interactive mode: walk the on-call through the runbook during a page and learn which steps helped.",
+      "Coverage analytics: which services lack runbooks for their top failure modes."
+    ],
+    "related": [
+      {
+        "num": 36,
+        "name": "AI Postmortem Generator",
+        "slug": "ai-postmortem-generator"
+      },
+      {
+        "num": 49,
+        "name": "AI Service Catalog Assistant",
+        "slug": "ai-service-catalog-assistant"
+      },
+      {
+        "num": 31,
+        "name": "AI Incident Summarizer",
+        "slug": "ai-incident-summarizer"
+      },
+      {
+        "num": 30,
+        "name": "AI Alert Investigation Assistant",
+        "slug": "ai-alert-investigation-assistant"
+      }
+    ],
+    "diagram": "┌────────────────────────────────────────────────────┐\n│ Incident + topology ingestion                      │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼  ← read-only\n┌────────────────────────────────────────────────────┐\n│ Runbook drafting (per failure mode)                │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Grounding: real commands · dashboards              │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼  ← link-validated\n┌────────────────────────────────────────────────────┐\n│ Owner review via pull request                      │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Continuous re-validation on change                 │\n└────────────────────────────────────────────────────┘",
+    "schema": "{\n  \"service\": \"payments-api\",\n  \"failure_mode\": \"consumer-lag-spike\",\n  \"runbook\": {\n    \"title\": \"payments-api: Kafka consumer lag spike\",\n    \"detection\": [{\"signal\": \"kafka_consumergroup_lag > 100000 for 5m\", \"dashboard\": \"grafana/d/payments-lag\"}],\n    \"diagnosis_steps\": [\n      {\"step\": 1, \"action\": \"kubectl -n payments logs deploy/order-worker --tail=200\", \"expect\": \"DB lock errors or rebalance storms\"}\n    ],\n    \"mitigation_steps\": [\n      {\"step\": 1, \"action\": \"scale consumer deployment to 6 replicas\", \"expect\": \"lag slope turns negative within 10m\"}\n    ],\n    \"escalation\": {\"owner\": \"@payments-oncall\", \"when\": \"lag still rising after mitigation step 2\"}\n  },\n  \"grounding_report\": {\"links_validated\": 7, \"links_broken\": 1, \"stale_steps_flagged\": 2},\n  \"last_validated\": \"2026-10-12T09:00:00Z\"\n}"
+  },
+  {
+    "num": 52,
+    "slug": "ai-flaky-test-detective",
+    "name": "AI Flaky Test Detective",
+    "area": "CI/CD",
+    "tldr": "Find the tests that fail for no reason — statistically, across pipeline history — explain why they flake, and propose quarantine or fixes.",
+    "complexity": "Medium",
+    "automation": "Assistive",
+    "problem_intro": "Flaky tests poison trust in CI: engineers learn to hit 'retry' without reading, and real failures hide inside the noise they created.",
+    "problem": [
+      "A flaky test fails intermittently; a single red run tells you almost nothing about whether the code or the test is at fault.",
+      "Retries mask flakiness: green builds hide the fact that half the suite is a coin flip.",
+      "Hunting flakiness manually means grepping pipeline history across weeks and correlating with timing, order, and runner noise.",
+      "Quarantine policies are ad hoc: nobody remembers which tests are 'known flaky' or re-triages them."
+    ],
+    "impact": "Flaky tests waste retry-minutes at scale, train engineers to ignore red, and let genuine regressions slip through a suite nobody trusts.",
+    "capabilities": [
+      [
+        "Statistical detection",
+        "retry-aware failure-rate analysis across pipeline history separates flaky from broken"
+      ],
+      [
+        "Failure clustering",
+        "groups the failing runs of one test and compares error signatures across failures"
+      ],
+      [
+        "Cause hypothesis",
+        "correlates flakes with parallelism, timeouts, ordering, shared state, network, and runner pressure"
+      ],
+      [
+        "Quarantine & fix drafting",
+        "opens a quarantine PR with evidence, or drafts the fix (explicit waits, isolation, seeds, timeouts)"
+      ],
+      [
+        "Re-triage loop",
+        "tracks quarantined tests with expiries and retires or promotes them on evidence"
+      ]
+    ],
+    "solution": "A CI-side analyzer that ingests pipeline and test history (JUnit results, GitHub Actions/Jenkins/GitLab APIs), computes per-test flakiness scores, and — for the worst offenders — pulls failing runs' logs and diffs their error signatures to hypothesize the mechanism (shared state, race, timeout, environment). It proposes a path per test: quarantine with an expiry, a concrete fix PR, or an infra-level remedy (more runners, better isolation).",
+    "steps": [
+      [
+        "Collect",
+        "test results and logs across pipeline history, including retries"
+      ],
+      [
+        "Score",
+        "per-test flakiness: failure rate, pass-after-retry rate, correlation with time/runner/branch"
+      ],
+      [
+        "Cluster",
+        "group failing runs per test; compare error signatures across failures"
+      ],
+      [
+        "Diagnose",
+        "hypothesize mechanism from signature diffs, timing, and resource data"
+      ],
+      [
+        "Act",
+        "quarantine PR with evidence + expiry, fix PR draft, or infra recommendation; track to resolution"
+      ]
+    ],
+    "hitl": "The detective never merges: quarantine and fix PRs are reviewed by test owners; re-triage reports keep quarantines honest and temporary.",
+    "components": [
+      [
+        "History collector",
+        "CI APIs and JUnit/pytest result ingestion, retry-aware"
+      ],
+      [
+        "Flakiness engine",
+        "statistical scoring per test and per suite"
+      ],
+      [
+        "Signature differ",
+        "log comparison across a test's failures"
+      ],
+      [
+        "Action drafter",
+        "quarantine PRs, fix suggestions, infra recommendations, expiry tracker"
+      ]
+    ],
+    "flow": [
+      "Nightly (or on a webhook), the collector refreshes per-test statistics from the CI system.",
+      "Tests above the flakiness threshold are flagged with their cost: retries wasted, minutes lost.",
+      "For top offenders, failure signatures are diffed and a mechanism hypothesis is drafted.",
+      "Owners get a quarantine or fix PR with evidence; expiry dates force re-triage."
+    ],
+    "platforms": [
+      [
+        "Cost-efficient model tiers",
+        "GPT-5 Mini/Nano · Claude Haiku 4.5 · Gemini Flash · DeepSeek V4 · Mistral Small",
+        "high-volume events (every failure, every alert) at a fraction of frontier cost"
+      ],
+      [
+        "Frontier cloud models",
+        "OpenAI GPT-5.x · Anthropic Claude Opus/Sonnet 4.x · Google Gemini 3 Pro · xAI Grok · Z.ai GLM",
+        "deep reasoning over the assembled context; strongest for root-cause analysis and fix suggestions"
+      ],
+      [
+        "AI coding agents (human-invoked)",
+        "Claude Code · OpenAI Codex · GitHub Copilot coding agent · Cursor · Cline · OpenHands",
+        "author the suggested fix as a reviewed pull request"
+      ],
+      [
+        "AI observability & evaluation",
+        "Langfuse · Arize Phoenix · LangSmith · W&B Weave · OpenTelemetry GenAI conventions · promptfoo",
+        "tracing of every model and tool call, cost/latency tracking, prompt regression evals"
+      ]
+    ],
+    "integrations": [
+      [
+        "GitHub Actions / Jenkins / GitLab CI",
+        "pipeline and test-result APIs"
+      ],
+      [
+        "Test frameworks (JUnit, pytest, go test)",
+        "structured results, retries, timing"
+      ],
+      [
+        "CI retry policies",
+        "retry semantics awareness in scoring"
+      ],
+      [
+        "Slack / dashboards",
+        "weekly flakiness report per team"
+      ]
+    ],
+    "context": [
+      "per-test pass/fail history with retries",
+      "failing-run logs and error signatures",
+      "pipeline parallelism and runner metadata",
+      "timing and resource metrics",
+      "test ownership from CODEOWNERS"
+    ],
+    "tools": [
+      "Read-only: CI APIs, artifact stores, log storage",
+      "Write tier: PR creation (quarantine/fix), issue filing"
+    ],
+    "benefits": [
+      "A ranked, costed list of what flakiness actually costs, per team.",
+      "Quarantines with expiries instead of permanent skips.",
+      "Real fixes for the top mechanisms: state leakage, races, timeouts.",
+      "CI red becomes meaningful again."
+    ],
+    "security": [
+      "Test logs can embed secrets or customer data from fixtures: redact before model calls; prefer self-hosted models for raw logs.",
+      "Quarantine is audited: skipping tests is a security-relevant action; every skip names an owner and an expiry."
+    ],
+    "future": [
+      "Pre-merge flakiness check: flag PRs touching files with high-flakiness tests.",
+      "Order-shuffle and repetition testing generated automatically for suspected state leaks.",
+      "Org-wide flakiness budget per team with trend tracking."
+    ],
+    "related": [
+      {
+        "num": 10,
+        "name": "AI Test Failure Analyzer",
+        "slug": "ai-test-failure-analyzer"
+      },
+      {
+        "num": 1,
+        "name": "AI Pipeline Failure Analyzer",
+        "slug": "ai-pipeline-failure-analyzer"
+      },
+      {
+        "num": 11,
+        "name": "AI Build Optimization Assistant",
+        "slug": "ai-build-optimization-assistant"
+      },
+      {
+        "num": 7,
+        "name": "AI GitHub Actions Debugger",
+        "slug": "ai-github-actions-debugger"
+      }
+    ],
+    "diagram": "┌────────────────────────────────────────────────────┐\n│ Test history ingestion (with retries)              │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Flakiness scoring across runs                      │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Failure clustering + signature diff                │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Mechanism hypothesis (race · state · time)         │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Quarantine / fix PR + re-triage                    │\n└────────────────────────────────────────────────────┘",
+    "schema": "{\n  \"test_id\": \"checkout.E2E.test_payment_retry\",\n  \"flakiness_score\": 0.34,\n  \"observations\": {\"runs_last_30d\": 412, \"failures\": 41, \"pass_after_retry\": 38, \"retry_minutes_wasted\": 96},\n  \"signature_clusters\": [\n    {\"signature\": \"TimeoutError: waiting for #checkout-btn\", \"count\": 29, \"correlated_with\": \"parallelism=8 + p95 runner cpu 0.97\"}\n  ],\n  \"hypothesis\": {\"mechanism\": \"resource-contention-timeout\", \"confidence\": \"high\", \"evidence\": [\"fails on 8-way shards\", \"passes in isolation 50/50\"]},\n  \"recommendation\": {\"action\": \"quarantine_with_fix_pr\", \"quarantine_expiry\": \"2026-11-12\", \"fix_pr\": \"PR-2841\"}\n}"
+  },
+  {
+    "num": 53,
+    "slug": "ai-database-migration-reviewer",
+    "name": "AI Database Migration Reviewer",
+    "area": "CI/CD",
+    "tldr": "Review every schema migration before it ships: lock risk, backward compatibility, data loss, and a rehearsed backout plan.",
+    "complexity": "Medium",
+    "automation": "Assistive",
+    "problem_intro": "Schema migrations are the deployments most likely to cause an outage, yet they get less review than a CSS change — locks, backfills, and ordering problems don't show up in a unit test.",
+    "problem": [
+      "A migration that is instant on a dev table takes an exclusive lock on a 500M-row production table.",
+      "Breaking changes (dropped columns, narrowed types, renamed fields) fail at runtime in old code still being deployed.",
+      "Migrations and application deploys are ordered wrong: the new code ships before its column exists.",
+      "Backout plans are wishful thinking: 'down' migrations rarely survive contact with real data."
+    ],
+    "impact": "One bad migration can lock the primary write path for minutes, and the rollback may be worse than the deploy — this is where review leverage is highest.",
+    "capabilities": [
+      [
+        "Lock & duration modeling",
+        "estimates lock semantics (online DDL, CONCURRENTLY, pt-osc) against real table sizes to predict blocking"
+      ],
+      [
+        "Compatibility analysis",
+        "expand-contract checking: will the currently deployed code still run after this migration?"
+      ],
+      [
+        "Data-loss detection",
+        "flags destructive operations with the exact data at risk"
+      ],
+      [
+        "Backout drafting",
+        "writes a realistic backout plan — or names the point of no return — before approval"
+      ],
+      [
+        "Deploy-order guidance",
+        "sequences migrations against app deploys and feature flags"
+      ]
+    ],
+    "solution": "A PR-facing reviewer for migration files (SQL, Alembic, Flyway, Liquibase, Prisma, Rails): it parses the migration, queries read-only metadata about production table sizes and indexes, and returns a risk report — blocking estimate, compatibility with the currently deployed version, destructiveness, and a backout sketch — as PR comments. It learns your patterns: expand-contract discipline, lock-timeout usage, batched backfills.",
+    "steps": [
+      [
+        "Parse",
+        "read the migration diff and dialect; identify DDL/DML and targets"
+      ],
+      [
+        "Ground",
+        "fetch table sizes, row counts, and index usage from prod metadata (read-only)"
+      ],
+      [
+        "Analyze",
+        "lock/duration estimate, compatibility with deployed code, data-loss scan"
+      ],
+      [
+        "Report",
+        "PR review comments with severity, evidence, and required mitigations"
+      ],
+      [
+        "Plan",
+        "attach backout plan and deploy-order recommendation to the release checklist"
+      ]
+    ],
+    "hitl": "Advisory by default: the reviewer blocks nothing itself, but protected paths can require a named migration owner to sign off on high-risk items.",
+    "components": [
+      [
+        "Migration parser",
+        "dialect-aware parsing of the migration diff"
+      ],
+      [
+        "Metadata probe",
+        "read-only information_schema / pg_stat / cloud catalog queries"
+      ],
+      [
+        "Risk engine",
+        "lock modeling, expand-contract checks, destructiveness heuristics + LLM reasoning"
+      ],
+      [
+        "PR reviewer",
+        "inline comments, severity labels, checklist attachments"
+      ]
+    ],
+    "flow": [
+      "The CI pipeline posts the migration diff to the reviewer.",
+      "The probe grounds the analysis in real table sizes and lock behavior.",
+      "The engine returns inline findings: blocking risk, compat breaks, destructive steps.",
+      "A backout plan and deploy ordering ride along with the release checklist."
+    ],
+    "platforms": [
+      [
+        "Cost-efficient model tiers",
+        "GPT-5 Mini/Nano · Claude Haiku 4.5 · Gemini Flash · DeepSeek V4 · Mistral Small",
+        "high-volume events (every failure, every alert) at a fraction of frontier cost"
+      ],
+      [
+        "Frontier cloud models",
+        "OpenAI GPT-5.x · Anthropic Claude Opus/Sonnet 4.x · Google Gemini 3 Pro · xAI Grok · Z.ai GLM",
+        "deep reasoning over the assembled context; strongest for root-cause analysis and fix suggestions"
+      ],
+      [
+        "AI observability & evaluation",
+        "Langfuse · Arize Phoenix · LangSmith · W&B Weave · OpenTelemetry GenAI conventions · promptfoo",
+        "tracing of every model and tool call, cost/latency tracking, prompt regression evals"
+      ],
+      [
+        "Model routing & AI gateways",
+        "LiteLLM · OpenRouter · Portkey · Kong AI Gateway · Cloudflare AI Gateway",
+        "provider-agnostic routing with fallbacks, budgets, caching, and audit logs"
+      ]
+    ],
+    "integrations": [
+      [
+        "GitHub / GitLab",
+        "PR comments and checks"
+      ],
+      [
+        "PostgreSQL / MySQL / SQL Server",
+        "read-only metadata and lock semantics"
+      ],
+      [
+        "Alembic / Flyway / Liquibase / Prisma",
+        "migration frameworks"
+      ],
+      [
+        "ORMs & schema registries",
+        "code-side usage of changed columns"
+      ],
+      [
+        "Slack",
+        "release-checklist notifications"
+      ]
+    ],
+    "context": [
+      "migration diff and dialect",
+      "table sizes, row counts, indexes",
+      "currently deployed app version's expectations",
+      "migration history and conventions",
+      "replication topology"
+    ],
+    "tools": [
+      "Read-only: information_schema, pg_stat, cloud DB catalogs, repo code (column usage)",
+      "Write tier: PR comments and check results only"
+    ],
+    "benefits": [
+      "Blocking and data-loss risks surfaced before merge, not at 2am.",
+      "Expand-contract discipline enforced gently and consistently.",
+      "Backout plans written while the data still exists to write about.",
+      "Fewer migration-induced outages and freeze-window panics."
+    ],
+    "security": [
+      "Metadata access is read-only and least-privileged; no table data leaves the database — only schema statistics.",
+      "Schema names and comments can be sensitive: redact or use self-hosted models if required.",
+      "Findings are advisory; enforcement happens through required reviews, not secret gates."
+    ],
+    "future": [
+      "Shadow-run migrations against a sized-down clone to measure actual duration.",
+      "Migration rehearsal in CI with anonymized prod-shaped data.",
+      "Cross-service impact map: which other services read this table or column."
+    ],
+    "related": [
+      {
+        "num": 45,
+        "name": "AI Pull Request Infrastructure Reviewer",
+        "slug": "ai-pull-request-infrastructure-reviewer"
+      },
+      {
+        "num": 3,
+        "name": "AI Terraform Reviewer",
+        "slug": "ai-terraform-reviewer"
+      },
+      {
+        "num": 21,
+        "name": "AI Terraform Plan Explainer",
+        "slug": "ai-terraform-plan-explainer"
+      },
+      {
+        "num": 12,
+        "name": "AI Deployment Troubleshooting Agent",
+        "slug": "ai-deployment-troubleshooting-agent"
+      }
+    ],
+    "diagram": "┌────────────────────────────────────────────────────┐\n│ Migration diff from pull request                   │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Prod metadata grounding (read-only)                │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼  ← sizes · locks · indexes\n┌────────────────────────────────────────────────────┐\n│ Risk analysis: locks · compat · loss               │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ PR review comments + severity                      │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Backout plan + deploy-order guidance               │\n└────────────────────────────────────────────────────┘",
+    "schema": "{\n  \"migration\": \"V042__add_orders_status_index.sql\",\n  \"dialect\": \"postgresql\",\n  \"risk_verdict\": \"HIGH\",\n  \"findings\": [\n    {\"severity\": \"high\", \"kind\": \"lock\", \"detail\": \"CREATE INDEX without CONCURRENTLY on orders (412M rows); estimated exclusive-lock hold 8-20 min\", \"mitigation\": \"use CREATE INDEX CONCURRENTLY\"},\n    {\"severity\": \"medium\", \"kind\": \"compat\", \"detail\": \"NOT NULL on status breaks deployed v1.14 writers\", \"mitigation\": \"add nullable, backfill, then constrain\"}\n  ],\n  \"backout\": {\"reversible\": true, \"plan\": \"DROP INDEX CONCURRENTLY orders_status_idx; no data loss\"},\n  \"deploy_order\": [\"migration 042\", \"app v1.15\"]\n}"
+  },
+  {
+    "num": 54,
+    "slug": "ai-kubernetes-upgrade-assistant",
+    "name": "AI Kubernetes Upgrade Assistant",
+    "area": "Kubernetes",
+    "tldr": "Plan and rehearse cluster upgrades: deprecated API scanning, add-on compatibility, canary node pools, and a rollback story — before anything touches production.",
+    "complexity": "High",
+    "automation": "Supervised automation",
+    "problem_intro": "Kubernetes upgrades are feared for good reason: version skew, removed APIs, and add-on incompatibilities turn a routine patch into a multi-day outage risk.",
+    "problem": [
+      "Deprecated APIs break workloads only when the new version actually runs — everything works today and fails after upgrade.",
+      "Add-ons (CNI, ingress, operators, CRDs) each carry their own compatibility matrix; nobody tracks the cross product.",
+      "Version-skew rules (kubelet vs control plane, max minors) constrain sequencing but are easy to violate across a fleet.",
+      "Every cluster is slightly different; a playbook that worked on staging fails on the pet cluster with a 2019 CRD."
+    ],
+    "impact": "A botched control-plane upgrade takes down everything at once; the difference between routine and outage is almost entirely preparation quality.",
+    "capabilities": [
+      [
+        "Deprecation scanning",
+        "walks live manifests, CRDs, and helm values for APIs removed in the target version"
+      ],
+      [
+        "Compatibility matrix",
+        "checks add-on and operator versions against the target k8s version and each other"
+      ],
+      [
+        "Fleet sequencing",
+        "plans upgrade order respecting skew rules, PDBs, and environment blast radius"
+      ],
+      [
+        "Rehearsal plan",
+        "generates canary node-pool and staging-first steps with explicit verification gates"
+      ],
+      [
+        "Rollback readiness",
+        "verifies etcd backups and states what is (and is not) reversible at each step"
+      ]
+    ],
+    "solution": "An upgrade copilot that reads the cluster's actual state (via k8s APIs, not guesses), diffs it against the target version's deprecation and compatibility data, and produces a sequenced, gated plan: pre-flight fixes as PRs (manifest/API updates validated with dry-runs), a rehearsed canary path (new node pool, drain, observe), verification queries at each gate, and a rollback decision tree. During execution it rides along with read-only checks at every gate, cluster-ops style (idea 19).",
+    "steps": [
+      [
+        "Inventory",
+        "scan the live cluster: API usage, CRDs, add-on versions, node pools, PDBs"
+      ],
+      [
+        "Diff",
+        "against the target version: removed APIs, add-on compatibility, skew constraints"
+      ],
+      [
+        "Plan",
+        "sequenced upgrade with canary stages, verification gates, and rollback points"
+      ],
+      [
+        "Pre-flight",
+        "open PRs for manifest/API fixes; validate with dry-run against the target version"
+      ],
+      [
+        "Ride-along",
+        "monitor each stage read-only; verify gate queries before the next step"
+      ]
+    ],
+    "hitl": "The assistant plans, drafts, and verifies; humans execute or approve each stage — control-plane actions are never autonomous in this idea.",
+    "components": [
+      [
+        "Inventory scanner",
+        "API usage, CRDs, versions, topology from the live cluster (read-only)"
+      ],
+      [
+        "Compatibility engine",
+        "deprecation data + add-on matrices + skew rules, LLM-assisted for the long tail"
+      ],
+      [
+        "Planner",
+        "sequencing with canary stages and verification gates"
+      ],
+      [
+        "PR drafter",
+        "manifest/helm fixes validated with dry-run against the target version"
+      ],
+      [
+        "Gate monitor",
+        "read-only health queries between stages"
+      ]
+    ],
+    "flow": [
+      "The scan inventories what actually runs: APIs in use, CRDs, add-on versions, skew state.",
+      "The diff names every removed API and incompatible add-on with the workload it affects.",
+      "A sequenced plan is produced: pre-flight PRs, canary node pool, gates, rollback points.",
+      "Pre-flight fixes land as reviewed PRs validated with dry-runs against the target version.",
+      "During execution, the monitor verifies each gate read-only before the human proceeds."
+    ],
+    "platforms": [
+      [
+        "Kubernetes AI tooling (CNCF)",
+        "K8sGPT · HolmesGPT · kagent · kubectl-ai",
+        "open-source analyzers and agents to build on instead of starting from scratch"
+      ],
+      [
+        "Frontier cloud models",
+        "OpenAI GPT-5.x · Anthropic Claude Opus/Sonnet 4.x · Google Gemini 3 Pro · xAI Grok · Z.ai GLM",
+        "deep reasoning over the assembled context; strongest for root-cause analysis and fix suggestions"
+      ],
+      [
+        "Agent frameworks",
+        "LangGraph · OpenAI Agents SDK · Microsoft Agent Framework · Google ADK · PydanticAI · CrewAI",
+        "orchestration: tool calling, retries, structured outputs, human-approval interrupts"
+      ],
+      [
+        "MCP servers (Model Context Protocol)",
+        "GitHub · kubernetes-mcp-server · mcp-grafana · Terraform MCP · AWS & Azure MCP · Slack · PagerDuty",
+        "standardized, permission-scoped, auditable tool access to DevOps systems"
+      ],
+      [
+        "AI observability & evaluation",
+        "Langfuse · Arize Phoenix · LangSmith · W&B Weave · OpenTelemetry GenAI conventions · promptfoo",
+        "tracing of every model and tool call, cost/latency tracking, prompt regression evals"
+      ]
+    ],
+    "integrations": [
+      [
+        "Kubernetes APIs",
+        "read-only inventory, dry-run validation"
+      ],
+      [
+        "Helm / Argo CD / Flux",
+        "manifest sources and add-on versions"
+      ],
+      [
+        "kubent / pluto / popeye",
+        "existing deprecation scanners to build on"
+      ],
+      [
+        "EKS / GKE / AKS APIs",
+        "control-plane versions and node-pool operations"
+      ],
+      [
+        "GitHub",
+        "pre-flight fix PRs"
+      ]
+    ],
+    "context": [
+      "live API usage and CRDs",
+      "add-on and operator versions",
+      "node pools and skew state",
+      "PDBs and critical workloads",
+      "etcd backup status",
+      "target-version deprecation data"
+    ],
+    "tools": [
+      "Read tier: k8s APIs, helm/Argo state, cloud version APIs",
+      "Write tier: PR creation; dry-run apply only with explicit approval"
+    ],
+    "benefits": [
+      "Upgrades become planned projects with evidence, not heroic weekend work.",
+      "No more removed-API surprises: every break is found and fixed pre-flight.",
+      "Canary-first execution with explicit gates and an honest rollback story.",
+      "Fleet consistency: the same plan template across dozens of clusters."
+    ],
+    "security": [
+      "Inventory data can be sensitive (names, images, env): keep raw dumps inside your model boundary or redact.",
+      "The assistant never mutates the cluster; dry-run apply is the ceiling without explicit, logged approval.",
+      "etcd backup verification is part of the plan — an upgrade without a fresh backup does not start."
+    ],
+    "future": [
+      "Continuous upgrade-readiness score per cluster, surfaced in the platform.",
+      "Automated pre-flight PR merging via GitOps once trust accumulates.",
+      "Node OS/image upgrades folded into the same gated flow."
+    ],
+    "related": [
+      {
+        "num": 19,
+        "name": "AI Cluster Operations Agent",
+        "slug": "ai-cluster-operations-agent"
+      },
+      {
+        "num": 16,
+        "name": "AI Helm Chart Analyzer",
+        "slug": "ai-helm-chart-analyzer"
+      },
+      {
+        "num": 17,
+        "name": "AI Kubernetes Incident Investigator",
+        "slug": "ai-kubernetes-incident-investigator"
+      },
+      {
+        "num": 47,
+        "name": "AI Internal Developer Platform Assistant",
+        "slug": "ai-internal-developer-platform-assistant"
+      }
+    ],
+    "diagram": "┌────────────────────────────────────────────────────┐\n│ Cluster inventory (read-only)                      │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Target-version diff: APIs · add-ons                │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Sequenced plan with gates + rollback               │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Pre-flight fix PRs (dry-run validated)             │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Stage ride-along + gate verification               │\n└────────────────────────────────────────────────────┘",
+    "schema": "{\n  \"cluster\": \"prod-eu-01\",\n  \"current_version\": \"1.28.9\",\n  \"target_version\": \"1.31.2\",\n  \"removed_apis_in_use\": [\n    {\"api\": \"flowcontrol.apiserver.k8s.io/v1beta2 FlowSchema\", \"count\": 3, \"workloads\": [\"gateway-ctrl\"], \"fixed_by\": \"PR-7712\"}\n  ],\n  \"addon_compat\": [\n    {\"addon\": \"cilium\", \"installed\": \"1.13.4\", \"required_min\": \"1.14.5\", \"action\": \"upgrade first\"}\n  ],\n  \"plan_stages\": [\n    {\"stage\": 1, \"action\": \"merge PR-7712 pre-flight fixes\", \"gate\": \"dry-run apply clean\"},\n    {\"stage\": 2, \"action\": \"canary node pool on 1.31\", \"gate\": \"PDB-respecting drains healthy\"}\n  ],\n  \"rollback\": {\"etcd_backup\": \"2026-10-12T02:00Z ok\", \"irreversible_after\": \"stage 4 (kubelet min-version bump)\"}\n}"
+  },
+  {
+    "num": 55,
+    "slug": "ai-drift-detective",
+    "name": "AI Drift Detective",
+    "area": "IaC",
+    "tldr": "Explain infrastructure drift: what changed, who changed it, whether it matters, and the safest path back to declared state — as a reviewed PR.",
+    "complexity": "Medium",
+    "automation": "Supervised automation",
+    "problem_intro": "Drift is the quiet gap between what Terraform/GitOps declares and what actually runs — created by console clicks, hotfixes, and half-finished changes, and usually discovered during the next apply.",
+    "problem": [
+      "A `terraform plan` shows drift as a diff; it never explains who made the change, when, or whether it was deliberate.",
+      "Blind reconciliation is dangerous: reverting a deliberate hotfix reintroduces the incident it fixed.",
+      "Drift accumulates silently across hundreds of resources; nobody knows which drift is load-bearing.",
+      "GitOps users see 'OutOfSync' constantly and click refresh without investigating why."
+    ],
+    "impact": "Unexamined drift makes every future apply a gamble — the next `terraform apply` or `argocd sync` executes decisions nobody made consciously.",
+    "capabilities": [
+      [
+        "Drift explanation",
+        "reads the live-vs-declared diff and explains each change in resource terms"
+      ],
+      [
+        "Attribution",
+        "correlates with cloud audit logs, deploy history, and tickets to find who and why"
+      ],
+      [
+        "Intent classification",
+        "labels drift: deliberate hotfix, manual experiment, automation artifact, or accident"
+      ],
+      [
+        "Safe reconciliation",
+        "proposes the path back — absorb into IaC (PR), revert via pipeline, or documented waiver; never raw console edits"
+      ],
+      [
+        "Drift analytics",
+        "trends per team and platform: which resources drift, which controls fail"
+      ]
+    ],
+    "solution": "A scheduled and webhook-triggered detector that runs plan/diff across your IaC and GitOps apps, triages every difference with attribution from cloud audit logs and CI history, and files a classified report — each item resolved by a reviewed PR: absorb (update code to match reality), revert (pipeline-applied), or waive (documented exception with expiry). It works as the investigation layer under existing drift alerts, not a replacement for them.",
+    "steps": [
+      [
+        "Detect",
+        "scheduled terraform plan / argocd diff across managed scopes"
+      ],
+      [
+        "Attribute",
+        "correlate each change with audit logs, deploys, and tickets"
+      ],
+      [
+        "Classify",
+        "LLM explains and labels intent per change, with evidence"
+      ],
+      [
+        "Propose",
+        "absorb PR / revert PR / waiver, with the reasoning attached"
+      ],
+      [
+        "Track",
+        "waivers expire; drift trends feed platform reviews"
+      ]
+    ],
+    "hitl": "Every reconciliation path is a reviewed PR or pipeline run — the detective investigates and drafts, humans decide absorb vs. revert vs. waive.",
+    "components": [
+      [
+        "Diff collector",
+        "terraform plan JSON, Argo CD / Flux diff APIs"
+      ],
+      [
+        "Attribution engine",
+        "CloudTrail / Azure Activity / GCP Audit Logs, CI and sync history, tickets"
+      ],
+      [
+        "Triage engine",
+        "LLM classification with strict output schema and evidence citations"
+      ],
+      [
+        "Reconciliation drafter",
+        "absorb/revert PRs via normal GitOps flow; waiver records with expiry"
+      ]
+    ],
+    "flow": [
+      "On schedule or webhook, diffs are collected across the managed estate.",
+      "Each difference is attributed: audit trail, deploy, or unknown actor.",
+      "The triage engine labels intent and drafts the matching reconciliation PR.",
+      "Owners choose absorb, revert, or waive; waivers carry expiries that re-open the question."
+    ],
+    "platforms": [
+      [
+        "Frontier cloud models",
+        "OpenAI GPT-5.x · Anthropic Claude Opus/Sonnet 4.x · Google Gemini 3 Pro · xAI Grok · Z.ai GLM",
+        "deep reasoning over the assembled context; strongest for root-cause analysis and fix suggestions"
+      ],
+      [
+        "Cost-efficient model tiers",
+        "GPT-5 Mini/Nano · Claude Haiku 4.5 · Gemini Flash · DeepSeek V4 · Mistral Small",
+        "high-volume events (every failure, every alert) at a fraction of frontier cost"
+      ],
+      [
+        "MCP servers (Model Context Protocol)",
+        "GitHub · kubernetes-mcp-server · mcp-grafana · Terraform MCP · AWS & Azure MCP · Slack · PagerDuty",
+        "standardized, permission-scoped, auditable tool access to DevOps systems"
+      ],
+      [
+        "AI observability & evaluation",
+        "Langfuse · Arize Phoenix · LangSmith · W&B Weave · OpenTelemetry GenAI conventions · promptfoo",
+        "tracing of every model and tool call, cost/latency tracking, prompt regression evals"
+      ]
+    ],
+    "integrations": [
+      [
+        "Terraform / OpenTofu",
+        "plan JSON as the drift source"
+      ],
+      [
+        "Argo CD / Flux",
+        "OutOfSync diffs and sync history"
+      ],
+      [
+        "CloudTrail / Azure Activity / GCP Audit",
+        "attribution of live changes"
+      ],
+      [
+        "GitHub / GitLab",
+        "reconciliation PRs"
+      ],
+      [
+        "Slack",
+        "drift digest per platform team"
+      ]
+    ],
+    "context": [
+      "declared state (IaC + GitOps)",
+      "live resource state and diffs",
+      "cloud audit logs",
+      "deploy and sync history",
+      "past drift decisions and waivers"
+    ],
+    "tools": [
+      "Read tier: plan/diff generation, audit-log queries, deploy history",
+      "Write tier: PR creation only — reconciliation executes through normal pipelines"
+    ],
+    "benefits": [
+      "Every diff comes with a who, why, and recommendation — applies become boring again.",
+      "Deliberate hotfixes get absorbed instead of clobbered by the next apply.",
+      "Drift stops accumulating: waivers expire, trends get fixed at the root.",
+      "Works with existing GitOps tooling instead of replacing it."
+    ],
+    "security": [
+      "Audit-log queries and diffs are read-only; the write path is exactly the PR pipeline everyone already reviews.",
+      "Diffs can embed tags, AMIs, and network detail: route raw state through self-hosted models if your boundary requires it.",
+      "Attribution data is access-controlled: the detective sees audit logs, so its own access is logged too."
+    ],
+    "future": [
+      "Auto-absorb for trusted categories (tags, autoscaling artifacts) with owner notification.",
+      "Drift prevention: config rules that make the common console-click impossible.",
+      "Multi-cloud drift correlation for shared platform resources."
+    ],
+    "related": [
+      {
+        "num": 40,
+        "name": "AI Cloud Misconfiguration Analyzer",
+        "slug": "ai-cloud-misconfiguration-analyzer"
+      },
+      {
+        "num": 3,
+        "name": "AI Terraform Reviewer",
+        "slug": "ai-terraform-reviewer"
+      },
+      {
+        "num": 21,
+        "name": "AI Terraform Plan Explainer",
+        "slug": "ai-terraform-plan-explainer"
+      },
+      {
+        "num": 19,
+        "name": "AI Cluster Operations Agent",
+        "slug": "ai-cluster-operations-agent"
+      }
+    ],
+    "diagram": "┌────────────────────────────────────────────────────┐\n│ Plan/diff across IaC + GitOps                      │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼  ← scheduled\n┌────────────────────────────────────────────────────┐\n│ Attribution: audit logs · deploys                  │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼  ← who & why\n┌────────────────────────────────────────────────────┐\n│ Intent classification with evidence                │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Absorb PR · revert PR · waiver                     │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼  ← human decision\n┌────────────────────────────────────────────────────┐\n│ Waiver expiry + drift trends                       │\n└────────────────────────────────────────────────────┘",
+    "schema": "{\n  \"scope\": \"aws:prod-network\",\n  \"drifted_resources\": 5,\n  \"findings\": [\n    {\n      \"resource\": \"aws_security_group.sg-alpha\",\n      \"diff\": \"ingress rule 0.0.0.0/0:443 added\",\n      \"attribution\": {\"actor\": \"jane@corp\", \"source\": \"CloudTrail evt-9f21\", \"when\": \"2026-10-09T14:22Z\", \"ticket\": \"INC-8312 hotfix\"},\n      \"classification\": \"deliberate_hotfix\",\n      \"recommendation\": \"absorb\",\n      \"proposal\": \"PR-441 (adds the rule to TF with comment)\"\n    }\n  ],\n  \"trend\": {\"drift_events_30d\": 14, \"top_offender\": \"aws_security_group\", \"waivers_open\": 2}\n}"
+  },
+  {
+    "num": 56,
+    "slug": "ai-backup-dr-reviewer",
+    "name": "AI Backup & DR Readiness Reviewer",
+    "area": "Cloud",
+    "tldr": "Audit whether you can actually recover: backup coverage vs. RTO/RPO, expired retention, untested restores, and DR drills that run on schedule.",
+    "complexity": "Medium",
+    "automation": "Assistive",
+    "problem_intro": "Backups are the control everyone believes in and nobody tests: coverage gaps, silent failures, and restore procedures that have never run against real data.",
+    "problem": [
+      "Snapshot schedules exist; whether they cover every critical datastore (and their cross-region copies) is tribal knowledge.",
+      "Retention and expiry misconfigurations surface only when a restore is needed and the snapshot is gone.",
+      "RTO/RPO claims in the DR doc are never compared to what the backup config actually delivers.",
+      "Restore tests happen annually (or never), so breakage in the restore path accumulates invisibly."
+    ],
+    "impact": "The first full restore test should not happen during an outage; readiness verified monthly is worth infinitely more than a DR binder.",
+    "capabilities": [
+      [
+        "Coverage mapping",
+        "inventories datastores vs. backup policies and names what is unprotected, cross-region gaps included"
+      ],
+      [
+        "RTO/RPO reconciliation",
+        "compares documented targets with snapshot frequency, retention, and replication reality"
+      ],
+      [
+        "Restore verification planning",
+        "generates and schedules restore tests into scratch environments with integrity checks"
+      ],
+      [
+        "Config drift review",
+        "flags retention changes, disabled policies, and expired keys in the backup chain"
+      ],
+      [
+        "Runbook generation",
+        "produces per-datastore restore runbooks consistent with idea 51's format"
+      ]
+    ],
+    "solution": "A scheduled reviewer that reads backup configurations across cloud providers (AWS Backup, Azure Recovery Services, GCP Backup and DR, plus in-cluster options like Velero), reconciles them against a criticality register (from the service catalog), and produces a readiness report: coverage, RPO gaps, retention risks, and scheduled restore drills with generated runbooks. Findings file issues; drills run in sandboxed scratch accounts.",
+    "steps": [
+      [
+        "Inventory",
+        "enumerate datastores and their backup/replication configs across providers"
+      ],
+      [
+        "Reconcile",
+        "map against the criticality register and documented RTO/RPO"
+      ],
+      [
+        "Report",
+        "coverage gaps, retention risks, expired credentials, cross-region shortfalls"
+      ],
+      [
+        "Drill",
+        "schedule restore tests into scratch environments; verify integrity and time-to-restore"
+      ],
+      [
+        "Close",
+        "file issues per gap; refresh DR runbooks to match what was proven"
+      ]
+    ],
+    "hitl": "Read-only auditing and report drafting; restore drills run only in scratch environments with explicit enablement per team.",
+    "components": [
+      [
+        "Inventory collector",
+        "backup policies, snapshots, replication across clouds and Velero"
+      ],
+      [
+        "Reconciliation engine",
+        "criticality register vs. actual config; RPO math"
+      ],
+      [
+        "Drill orchestrator",
+        "scratch-env restore tests with integrity and timing checks"
+      ],
+      [
+        "Reporter",
+        "readiness scorecard, issues, and runbook PRs"
+      ]
+    ],
+    "flow": [
+      "The collector inventories what is backed up, where, how often, and retained how long.",
+      "The reconciler names every gap between documented recovery targets and actual configuration.",
+      "Restore drills run on schedule in scratch environments, measuring real time-to-restore.",
+      "Gaps become issues; proven procedures become runbooks; trends show readiness over time."
+    ],
+    "platforms": [
+      [
+        "Cost-efficient model tiers",
+        "GPT-5 Mini/Nano · Claude Haiku 4.5 · Gemini Flash · DeepSeek V4 · Mistral Small",
+        "high-volume events (every failure, every alert) at a fraction of frontier cost"
+      ],
+      [
+        "Frontier cloud models",
+        "OpenAI GPT-5.x · Anthropic Claude Opus/Sonnet 4.x · Google Gemini 3 Pro · xAI Grok · Z.ai GLM",
+        "deep reasoning over the assembled context; strongest for root-cause analysis and fix suggestions"
+      ],
+      [
+        "AI observability & evaluation",
+        "Langfuse · Arize Phoenix · LangSmith · W&B Weave · OpenTelemetry GenAI conventions · promptfoo",
+        "tracing of every model and tool call, cost/latency tracking, prompt regression evals"
+      ],
+      [
+        "Model routing & AI gateways",
+        "LiteLLM · OpenRouter · Portkey · Kong AI Gateway · Cloudflare AI Gateway",
+        "provider-agnostic routing with fallbacks, budgets, caching, and audit logs"
+      ]
+    ],
+    "integrations": [
+      [
+        "AWS Backup / Azure Recovery Services / GCP Backup and DR",
+        "policy and job APIs"
+      ],
+      [
+        "Velero / volume snapshots",
+        "in-cluster backup state"
+      ],
+      [
+        "Service catalog / CMDB",
+        "criticality register and ownership"
+      ],
+      [
+        "RDS / Azure SQL / Cloud SQL",
+        "engine-native backup configs"
+      ],
+      [
+        "Issue tracker & wiki",
+        "findings and runbook publication"
+      ]
+    ],
+    "context": [
+      "backup policies and schedules",
+      "snapshot inventory and retention",
+      "cross-region replication state",
+      "criticality register and RTO/RPO docs",
+      "past drill results"
+    ],
+    "tools": [
+      "Read-only: cloud backup APIs, snapshot listings, catalog data",
+      "Write tier: scratch-env provisioning and issue filing, per-team enablement"
+    ],
+    "benefits": [
+      "A truthful answer to 'can we recover?', with evidence instead of confidence.",
+      "Coverage and retention gaps found by schedule, not by disaster.",
+      "Restore-path regressions caught monthly in scratch, not annually in crisis.",
+      "DR docs converge on procedures that were actually executed."
+    ],
+    "security": [
+      "Restore drills touch copies of production data: isolated scratch accounts, encryption at rest, teardown on completion; redact before any model sees drill output.",
+      "The reviewer is read-only on production by design; it never mutates backup policies.",
+      "Backup systems are exfiltration paths in the wrong hands: drill credentials are scoped and short-lived."
+    ],
+    "future": [
+      "Failure injection into the DR path (expired keys, corrupt replicas) with the chaos designer (idea 58).",
+      "Ransomware-readiness checks: immutable vault coverage and restore-from-locked-copy tests.",
+      "Automated quarterly attestation reports for auditors."
+    ],
+    "related": [
+      {
+        "num": 28,
+        "name": "AI Cloud Architecture Advisor",
+        "slug": "ai-cloud-architecture-advisor"
+      },
+      {
+        "num": 29,
+        "name": "AI Cloud Resource Optimization Assistant",
+        "slug": "ai-cloud-resource-optimization-assistant"
+      },
+      {
+        "num": 26,
+        "name": "AI Cloud Cost Analysis Assistant",
+        "slug": "ai-cloud-cost-analysis-assistant"
+      },
+      {
+        "num": 51,
+        "name": "AI Runbook Generator",
+        "slug": "ai-runbook-generator"
+      }
+    ],
+    "diagram": "┌────────────────────────────────────────────────────┐\n│ Datastore & backup config inventory                │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Reconcile vs. criticality + RTO/RPO                │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Readiness report + filed issues                    │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Scheduled restore drills (scratch)                 │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼  ← sandboxed\n┌────────────────────────────────────────────────────┐\n│ Proven runbooks + trend tracking                   │\n└────────────────────────────────────────────────────┘",
+    "schema": "{\n  \"scan_date\": \"2026-10-12\",\n  \"coverage\": {\n    \"datastores\": 47,\n    \"protected\": 41,\n    \"unprotected\": [{\"store\": \"prod-eu redis-cache\", \"reason\": \"no policy attached\", \"criticality\": \"medium\"}]\n  },\n  \"rpo_gaps\": [\n    {\"store\": \"orders-db\", \"doc_rpo\": \"15m\", \"actual_rpo\": \"24h\", \"gap\": \"daily snapshots; PITR not enabled\"}\n  ],\n  \"drill\": {\"last\": \"2026-09-30\", \"store\": \"orders-db\", \"result\": \"pass\", \"time_to_restore\": \"38m vs RTO 60m\"},\n  \"score\": {\"readiness\": \"amber\", \"open_issues\": 6}\n}"
+  },
+  {
+    "num": 57,
+    "slug": "ai-slo-error-budget-assistant",
+    "name": "AI SLO & Error Budget Assistant",
+    "area": "Observability & SRE",
+    "tldr": "Turn 'we should have SLOs' into maintained ones: drafted from real traffic, backtested against history, with burn-rate alerts that don't cry wolf.",
+    "complexity": "Medium",
+    "automation": "Assistive",
+    "problem_intro": "SLOs fail in practice for boring reasons: they're guessed instead of measured, never maintained, and their alerts fire too often or too late to be useful.",
+    "problem": [
+      "Teams don't know which user journeys matter, so they either SLO everything or nothing.",
+      "Hand-written burn-rate alerts use bad windows and thresholds — they spam pages or never fire.",
+      "SLOs drift from reality: the SLI measures the wrong endpoint after a refactor, and nobody notices.",
+      "Error budgets exist on paper but don't drive decisions because the numbers are stale."
+    ],
+    "impact": "Without working SLOs, every incident is judged by vibes — and reliability work competes with features on unequal, anecdotal footing.",
+    "capabilities": [
+      [
+        "SLI discovery",
+        "mines traffic data to find the real user journeys and their volumes"
+      ],
+      [
+        "SLO drafting",
+        "proposes targets grounded in measured historical performance, not round numbers"
+      ],
+      [
+        "Burn-rate implementation",
+        "generates multiwindow burn-rate alerts validated against historical data to tune sensitivity"
+      ],
+      [
+        "Backtesting",
+        "replays proposed alerts over past incidents and quiet periods: would it page? how often? how early?"
+      ],
+      [
+        "Drift maintenance",
+        "watches SLI definitions vs. actual endpoints and dashboards, opening update PRs when they diverge"
+      ]
+    ],
+    "solution": "An SLO copilot integrated with Prometheus/Grafana (or your vendor's SLO tooling): it drafts SLIs/SLOs from real traffic and history, generates sloth-compatible recording rules and multiwindow burn-rate alerts, backtests them against the last 90 days, and keeps definitions in Git with PR review. Maintenance is continuous: when endpoints and dashboards change, it opens update PRs before the SLO rots.",
+    "steps": [
+      [
+        "Discover",
+        "analyze traffic and dashboards to propose SLIs for real user journeys"
+      ],
+      [
+        "Draft",
+        "SLO targets grounded in measured history; write definitions to a Git repo"
+      ],
+      [
+        "Backtest",
+        "simulate burn-rate alerts over past incidents and quiet periods"
+      ],
+      [
+        "Ship",
+        "PR with recording rules, alerts, and dashboard panels; owner review"
+      ],
+      [
+        "Maintain",
+        "watch SLI health and drift; weekly budget reports with decision guidance"
+      ]
+    ],
+    "hitl": "Targets and paging implications are always owner-approved via PR; the copilot backtests and drafts, humans decide what wakes people up.",
+    "components": [
+      [
+        "Traffic analyzer",
+        "metric/label and endpoint discovery from Prometheus or vendor APIs"
+      ],
+      [
+        "SLO composer",
+        "definitions, recording rules, sloth-style alerts"
+      ],
+      [
+        "Backtester",
+        "replays rules against history; reports page counts and detection lag"
+      ],
+      [
+        "Drift watcher",
+        "SLI validity checks on deploys; update PRs"
+      ]
+    ],
+    "flow": [
+      "Discovery proposes SLIs from what users actually hit, with volumes as evidence.",
+      "Drafts set targets from measured performance (p50/p95/p99 history), not aspiration.",
+      "Backtesting shows exactly when each alert would have fired across past incidents.",
+      "Everything ships as reviewed Git definitions; drift watching keeps them true."
+    ],
+    "platforms": [
+      [
+        "Cost-efficient model tiers",
+        "GPT-5 Mini/Nano · Claude Haiku 4.5 · Gemini Flash · DeepSeek V4 · Mistral Small",
+        "high-volume events (every failure, every alert) at a fraction of frontier cost"
+      ],
+      [
+        "Frontier cloud models",
+        "OpenAI GPT-5.x · Anthropic Claude Opus/Sonnet 4.x · Google Gemini 3 Pro · xAI Grok · Z.ai GLM",
+        "deep reasoning over the assembled context; strongest for root-cause analysis and fix suggestions"
+      ],
+      [
+        "AI observability & evaluation",
+        "Langfuse · Arize Phoenix · LangSmith · W&B Weave · OpenTelemetry GenAI conventions · promptfoo",
+        "tracing of every model and tool call, cost/latency tracking, prompt regression evals"
+      ],
+      [
+        "Model routing & AI gateways",
+        "LiteLLM · OpenRouter · Portkey · Kong AI Gateway · Cloudflare AI Gateway",
+        "provider-agnostic routing with fallbacks, budgets, caching, and audit logs"
+      ]
+    ],
+    "integrations": [
+      [
+        "Prometheus / Thanos / Mimir",
+        "SLI queries and history"
+      ],
+      [
+        "Grafana",
+        "SLO dashboards and annotations"
+      ],
+      [
+        "Sloth / Pyrra",
+        "rule generation to build on"
+      ],
+      [
+        "PagerDuty / Opsgenie",
+        "burn-rate routing"
+      ],
+      [
+        "GitHub",
+        "SLOs as reviewed code"
+      ]
+    ],
+    "context": [
+      "traffic volumes and golden signals",
+      "historical latency/error data",
+      "service topology and dependencies",
+      "existing dashboards and alert rules",
+      "past incident timelines"
+    ],
+    "tools": [
+      "Read-only: Prometheus queries, dashboard metadata, incident history",
+      "Write tier: PR creation for SLO definitions, rules, and dashboards"
+    ],
+    "benefits": [
+      "SLOs grounded in measured reality, covering the journeys that matter.",
+      "Burn-rate alerts tuned by backtesting — pages that fire when needed, not twice a week.",
+      "SLOs maintained like code: drift-prone definitions get update PRs.",
+      "Error budgets that actually arbitrate release decisions."
+    ],
+    "security": [
+      "SLI data is aggregated, but endpoint paths can leak route and feature names: apply the same export rules as other telemetry.",
+      "Paging changes are sensitive: alert-routing PRs require explicit owner sign-off."
+    ],
+    "future": [
+      "SLO-to-chaos integration: prioritize experiments where budget-burn risk is highest.",
+      "Cross-service SLO composition for journeys spanning multiple teams.",
+      "Release-gate integration: budget state warns or blocks in the deploy pipeline."
+    ],
+    "related": [
+      {
+        "num": 33,
+        "name": "AI Prometheus Query Generator",
+        "slug": "ai-prometheus-query-generator"
+      },
+      {
+        "num": 34,
+        "name": "AI Grafana Dashboard Assistant",
+        "slug": "ai-grafana-dashboard-assistant"
+      },
+      {
+        "num": 30,
+        "name": "AI Alert Investigation Assistant",
+        "slug": "ai-alert-investigation-assistant"
+      },
+      {
+        "num": 35,
+        "name": "AI Anomaly Investigation Agent",
+        "slug": "ai-anomaly-investigation-agent"
+      }
+    ],
+    "diagram": "┌────────────────────────────────────────────────────┐\n│ Traffic + dashboard discovery                      │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ SLI/SLO drafting (Git, PR review)                  │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Burn-rate backtest over 90 days                    │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼  ← tune before paging\n┌────────────────────────────────────────────────────┐\n│ Recording rules + alerts + panels                  │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Drift watch + weekly budget report                 │\n└────────────────────────────────────────────────────┘",
+    "schema": "{\n  \"service\": \"checkout-api\",\n  \"proposed_slos\": [\n    {\"sli\": \"availability\", \"definition\": \"success_rate(checkout, code<500) >= 99.9 in 5m windows\", \"target\": 99.9, \"basis\": \"measured 30d\"},\n    {\"sli\": \"latency\", \"definition\": \"90% of requests < 800ms (histogram_quantile)\", \"target\": 90, \"basis\": \"p90=612ms over 90d\"}\n  ],\n  \"backtest\": {\"window_days\": 90, \"alerts_would_have_fired\": 3, \"matching_incidents\": 3, \"false_pages\": 0, \"median_detection_min\": 7},\n  \"budget_report\": {\"window\": \"28d\", \"consumed\": \"62%\", \"guidance\": \"freeze risky releases until burn < 1x\"}\n}"
+  },
+  {
+    "num": 58,
+    "slug": "ai-chaos-experiment-designer",
+    "name": "AI Chaos Experiment Designer",
+    "area": "Observability & SRE",
+    "tldr": "Design safe chaos experiments from your real topology and SLOs: blast-radius prediction, steady-state hypotheses, abort conditions, and honest readouts.",
+    "complexity": "High",
+    "automation": "Supervised automation",
+    "problem_intro": "Chaos engineering works when experiments are carefully designed and fails loudly when they're not — the hard part is knowing what is safe to break, where, and what to watch.",
+    "problem": [
+      "Designing an experiment requires topology knowledge, dependency understanding, and steady-state metrics — usually all in one person's head.",
+      "Blast radius is guessed: the network partition aimed at staging takes out the shared auth service.",
+      "Abort conditions are vague ('if it looks bad'), so experiments overshoot into real incidents.",
+      "Results are anecdotes: without a hypothesis and measurement plan, chaos theater teaches nothing."
+    ],
+    "impact": "Well-designed experiments find real weaknesses before users do; poorly designed ones create the incidents they were meant to prevent.",
+    "capabilities": [
+      [
+        "Topology-aware design",
+        "uses service topology and dependency data (idea 49) to pick targets where failure is survivable"
+      ],
+      [
+        "Steady-state hypothesis",
+        "derives measurable assumptions from the service's SLOs (idea 57) rather than vibes"
+      ],
+      [
+        "Blast-radius prediction",
+        "estimates what shares the blast zone: same node, AZ, dependency, queue"
+      ],
+      [
+        "Guarded execution plans",
+        "generates platform manifests (Chaos Mesh/Litmus/Gremlin) with explicit abort conditions and auto-rollback"
+      ],
+      [
+        "Result readout",
+        "compares observed vs. hypothesis, files findings as issues, drafts the fix"
+      ]
+    ],
+    "solution": "A designer that composes experiments from your live topology, SLO definitions, and past incidents: for a target service it proposes experiment types (latency injection, pod kill, AZ loss, dependency failure), predicts blast radius from scheduling and dependency data, writes the hypothesis and abort criteria as code, and executes only through your chaos platform with human approval. Post-experiment, it produces an honest readout: what broke, what didn't, what to fix.",
+    "steps": [
+      [
+        "Select",
+        "rank candidate targets by SLO criticality × incident history × never-tested"
+      ],
+      [
+        "Design",
+        "experiment type, magnitude, duration; steady-state hypothesis from SLOs"
+      ],
+      [
+        "Predict",
+        "blast radius from topology and scheduling; derive abort conditions"
+      ],
+      [
+        "Approve",
+        "human review of the manifest; staged execution via the chaos platform"
+      ],
+      [
+        "Read out",
+        "observed vs. hypothesis; findings become issues and runbook updates"
+      ]
+    ],
+    "hitl": "Every experiment requires explicit approval with the blast-radius prediction attached; execution is platform-mediated with automatic aborts — the AI never fires experiments on its own.",
+    "components": [
+      [
+        "Target ranker",
+        "candidates from catalog criticality, incident history, and test coverage"
+      ],
+      [
+        "Experiment composer",
+        "platform-specific manifests (Chaos Mesh, Litmus, Gremlin)"
+      ],
+      [
+        "Blast-radius estimator",
+        "topology and scheduling analysis, dependency walk"
+      ],
+      [
+        "Readout analyzer",
+        "metrics comparison, findings drafting, issue filing"
+      ]
+    ],
+    "flow": [
+      "The ranker proposes where an experiment teaches the most and risks the least.",
+      "The composer writes the experiment with a measurable hypothesis and abort criteria.",
+      "The estimator attaches a blast-radius prediction and required approvals.",
+      "The platform executes with auto-abort armed; the readout turns results into fixes."
+    ],
+    "platforms": [
+      [
+        "Frontier cloud models",
+        "OpenAI GPT-5.x · Anthropic Claude Opus/Sonnet 4.x · Google Gemini 3 Pro · xAI Grok · Z.ai GLM",
+        "deep reasoning over the assembled context; strongest for root-cause analysis and fix suggestions"
+      ],
+      [
+        "Agent frameworks",
+        "LangGraph · OpenAI Agents SDK · Microsoft Agent Framework · Google ADK · PydanticAI · CrewAI",
+        "orchestration: tool calling, retries, structured outputs, human-approval interrupts"
+      ],
+      [
+        "RAG stack",
+        "pgvector · Qdrant · Weaviate · OpenSearch k-NN; embeddings from OpenAI, Cohere Embed, or open BGE-M3",
+        "retrieval over runbooks, docs, wikis, past incidents, and changelogs"
+      ],
+      [
+        "AI observability & evaluation",
+        "Langfuse · Arize Phoenix · LangSmith · W&B Weave · OpenTelemetry GenAI conventions · promptfoo",
+        "tracing of every model and tool call, cost/latency tracking, prompt regression evals"
+      ]
+    ],
+    "integrations": [
+      [
+        "Chaos Mesh / LitmusChaos / Gremlin / AWS FIS",
+        "execution platforms"
+      ],
+      [
+        "Service catalog & topology",
+        "target selection and dependency maps"
+      ],
+      [
+        "Prometheus / Grafana",
+        "steady-state metrics and abort signals"
+      ],
+      [
+        "SLO definitions (idea 57)",
+        "hypothesis and success criteria"
+      ],
+      [
+        "GitHub",
+        "experiment manifests as reviewed code"
+      ]
+    ],
+    "context": [
+      "service topology and dependencies",
+      "SLOs and steady-state metrics",
+      "past incidents and postmortems",
+      "past experiments and outcomes",
+      "scheduling, AZ, and node distribution"
+    ],
+    "tools": [
+      "Read tier: topology, metrics, incident history",
+      "Write tier: chaos platform API gated behind explicit per-experiment approval with abort armed"
+    ],
+    "benefits": [
+      "Experiments grounded in topology and SLOs instead of curiosity.",
+      "Blast-radius predictions and hard aborts make game days boring.",
+      "A portfolio view: which failure modes were tested, when, with what result.",
+      "Findings flow into issues and runbooks, not Slack threads that evaporate."
+    ],
+    "security": [
+      "Chaos platform credentials are scoped and the designer cannot widen them; production experiments need named-approver sign-off.",
+      "Freeze windows (peak season, ongoing incidents) are hard gates in the pipeline, not prompt suggestions.",
+      "Experiment manifests are treated like production changes: versioned, reviewed, auditable."
+    ],
+    "future": [
+      "Continuous verification: auto-rerun experiments after major topology changes.",
+      "Game-day copilot: facilitate live exercises with real-time hypothesis tracking.",
+      "Failure-mode fuzzing: mutate experiment parameters within approved bounds."
+    ],
+    "related": [
+      {
+        "num": 57,
+        "name": "AI SLO & Error Budget Assistant",
+        "slug": "ai-slo-error-budget-assistant"
+      },
+      {
+        "num": 35,
+        "name": "AI Anomaly Investigation Agent",
+        "slug": "ai-anomaly-investigation-agent"
+      },
+      {
+        "num": 32,
+        "name": "AI Root Cause Analysis Assistant",
+        "slug": "ai-root-cause-analysis-assistant"
+      },
+      {
+        "num": 19,
+        "name": "AI Cluster Operations Agent",
+        "slug": "ai-cluster-operations-agent"
+      }
+    ],
+    "diagram": "┌────────────────────────────────────────────────────┐\n│ Topology + SLO + incident mining                   │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Experiment design + hypothesis                     │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Blast-radius prediction + aborts                   │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼  ← hard limits\n┌────────────────────────────────────────────────────┐\n│ Human approval → platform execution                │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼  ← auto-abort armed\n┌────────────────────────────────────────────────────┐\n│ Honest readout → findings + fixes                  │\n└────────────────────────────────────────────────────┘",
+    "schema": "{\n  \"experiment_id\": \"chaos-2026-10-14-checkout-az\",\n  \"target\": {\"service\": \"checkout-api\", \"method\": \"zone-loss\", \"magnitude\": \"lose AZ eu-west-1c for 5m\"},\n  \"hypothesis\": {\"steady_state\": \"checkout availability stays above SLO during the loss\", \"derived_from\": \"SLOs (idea 57) + topology\"},\n  \"blast_radius\": {\"direct\": [\"checkout-api (12 pods in AZ c)\"], \"shared\": [\"session-store is replicated\"], \"risk\": \"low\"},\n  \"aborts\": [{\"condition\": \"availability < 99.0 for 2m\", \"action\": \"auto-rollback\"}],\n  \"approval\": {\"required\": \"@sre-oncall + service owner\", \"status\": \"pending\"},\n  \"readout\": null\n}"
+  },
+  {
+    "num": 59,
+    "slug": "ai-vulnerability-triage-assistant",
+    "name": "AI Vulnerability Triage Assistant",
+    "area": "DevSecOps",
+    "tldr": "Turn a 4,000-finding backlog into a work queue: dedupe across scanners, check reachability, and prioritize by real exploitability — not CVSS alone.",
+    "complexity": "Medium",
+    "automation": "Assistive",
+    "problem_intro": "Security scanners are cheap to run and expensive to read: thousands of findings, overlapping tools, false positives, and a CVSS score that ignores whether the vulnerable code path is even reachable.",
+    "problem": [
+      "Three scanners produce three overlapping lists with different IDs for the same CVE.",
+      "CVSS severity says nothing about reachability: a vulnerable library no code path touches is noise that still pages someone.",
+      "Backlogs are triaged by age or spreadsheet, so real risks wait behind paper cuts.",
+      "Engineers don't trust the queue, so they bulk-dismiss — including the findings that matter."
+    ],
+    "impact": "Untriaged backlogs hide the one exploitable finding among thousands; meanwhile teams waste sprints patching unreachable libraries to satisfy a dashboard.",
+    "capabilities": [
+      [
+        "Cross-scanner dedupe",
+        "normalizes findings from Trivy/Snyk/Grype/etc. into one canonical list"
+      ],
+      [
+        "Reachability analysis",
+        "checks whether the vulnerable symbol or path is actually used (call graphs, SCA evidence)"
+      ],
+      [
+        "Contextual prioritization",
+        "combines exploit intelligence (KEV/EPSS), exposure, and criticality with technical severity"
+      ],
+      [
+        "Remediation drafting",
+        "maps each finding to the smallest safe fix — version bump, patch, or mitigating control — with a PR where possible"
+      ],
+      [
+        "Dismissal quality control",
+        "reviews bulk dismissals and flags risky patterns; requires evidence per dismissal"
+      ]
+    ],
+    "solution": "A triage layer between your scanners and your issue tracker: it ingests raw findings from every scanner in CI, dedupes to canonical vulnerabilities, enriches with reachability (via code indexing) and threat intelligence (CISA KEV, EPSS), and outputs a ranked queue with per-finding rationale and a drafted remediation PR. Dismissals require structured evidence; the assistant audits them continuously.",
+    "steps": [
+      [
+        "Ingest",
+        "findings from all scanners in the pipeline, normalized to one schema"
+      ],
+      [
+        "Dedupe",
+        "canonicalize across tools: same CVE/package/path = one finding"
+      ],
+      [
+        "Enrich",
+        "reachability from the code index; KEV/EPSS/exploit intel; exposure context"
+      ],
+      [
+        "Rank",
+        "priority queue with transparent rationale per finding"
+      ],
+      [
+        "Act",
+        "remediation PRs for fixes; structured dismissals with evidence, audited"
+      ]
+    ],
+    "hitl": "Every dismissal requires human evidence entry and is re-audited; patch PRs are reviewed like any other code. The assistant ranks and drafts — security owns the decisions.",
+    "components": [
+      [
+        "Finding ingester",
+        "scanner report parsers (SARIF, SPDX, CycloneDX, native formats)"
+      ],
+      [
+        "Deduplication engine",
+        "CVE/package/path canonicalization"
+      ],
+      [
+        "Reachability indexer",
+        "call-graph and import analysis per repository"
+      ],
+      [
+        "Prioritization engine",
+        "KEV/EPSS/exposure/criticality scoring with LLM-written rationales"
+      ],
+      [
+        "Remediation drafter",
+        "version-bump/patch PRs with compatibility notes"
+      ]
+    ],
+    "flow": [
+      "Each CI run posts scanner output to the triage service.",
+      "Findings collapse into canonical vulnerabilities with full provenance.",
+      "Enrichment answers: reachable? exploited in the wild? internet-facing? business-critical?",
+      "The ranked queue drives work; fixes ship as PRs, dismissals leave evidence."
+    ],
+    "platforms": [
+      [
+        "Cost-efficient model tiers",
+        "GPT-5 Mini/Nano · Claude Haiku 4.5 · Gemini Flash · DeepSeek V4 · Mistral Small",
+        "high-volume events (every failure, every alert) at a fraction of frontier cost"
+      ],
+      [
+        "Frontier cloud models",
+        "OpenAI GPT-5.x · Anthropic Claude Opus/Sonnet 4.x · Google Gemini 3 Pro · xAI Grok · Z.ai GLM",
+        "deep reasoning over the assembled context; strongest for root-cause analysis and fix suggestions"
+      ],
+      [
+        "RAG stack",
+        "pgvector · Qdrant · Weaviate · OpenSearch k-NN; embeddings from OpenAI, Cohere Embed, or open BGE-M3",
+        "retrieval over runbooks, docs, wikis, past incidents, and changelogs"
+      ],
+      [
+        "AI observability & evaluation",
+        "Langfuse · Arize Phoenix · LangSmith · W&B Weave · OpenTelemetry GenAI conventions · promptfoo",
+        "tracing of every model and tool call, cost/latency tracking, prompt regression evals"
+      ]
+    ],
+    "integrations": [
+      [
+        "Trivy / Grype / Snyk / Dependabot / Semgrep",
+        "scanner ingestion"
+      ],
+      [
+        "GitHub Security Advisories / OSV",
+        "vulnerability intelligence"
+      ],
+      [
+        "CISA KEV / EPSS",
+        "exploitation signals"
+      ],
+      [
+        "GitHub / GitLab",
+        "PRs and security tabs"
+      ],
+      [
+        "Jira / Linear",
+        "work-queue sync"
+      ]
+    ],
+    "context": [
+      "normalized scanner findings",
+      "code index for reachability",
+      "package/SBOM data",
+      "exploit intelligence feeds",
+      "service exposure and criticality"
+    ],
+    "tools": [
+      "Read tier: scanner reports, OSV/KEV/EPSS APIs, code index",
+      "Write tier: PR creation, issue filing, dismissal records (audit-logged)"
+    ],
+    "benefits": [
+      "One queue instead of three dashboards; the same CVE counted once.",
+      "Patching effort aimed at exploitable, exposed, critical findings first.",
+      "Dismissals with evidence survive audits — and the assistant catches lazy ones.",
+      "Measurable backlog trend: mean-time-to-triage and time-to-fix."
+    ],
+    "security": [
+      "The triage service holds security-sensitive data (vulns + code maps): keep it inside your boundary; open-weight models for raw analysis.",
+      "Dismissal records are immutable and auditable — the assistant's recommendations are logged alongside human decisions.",
+      "Scanner metadata and reports are untrusted input: prompt-injection defenses apply."
+    ],
+    "future": [
+      "Auto-merge trusted patch PRs (patch-level bumps in non-critical services) once trust metrics allow.",
+      "Attack-path modeling: combine findings into multi-step exploit chains.",
+      "Regression gate: block new KEV-listed, reachable findings at merge time."
+    ],
+    "related": [
+      {
+        "num": 37,
+        "name": "AI Container Vulnerability Explainer",
+        "slug": "ai-container-vulnerability-explainer"
+      },
+      {
+        "num": 42,
+        "name": "AI Dependency Risk Analyzer",
+        "slug": "ai-dependency-risk-analyzer"
+      },
+      {
+        "num": 41,
+        "name": "AI Security Incident Assistant",
+        "slug": "ai-security-incident-assistant"
+      },
+      {
+        "num": 38,
+        "name": "AI Kubernetes Security Analyzer",
+        "slug": "ai-kubernetes-security-analyzer"
+      }
+    ],
+    "diagram": "┌────────────────────────────────────────────────────┐\n│ Scanner ingestion (all tools)                      │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Canonical dedupe across scanners                   │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Reachability + threat-intel enrichment             │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Ranked queue with rationale                        │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Fix PRs · evidence-gated dismissals                │\n└────────────────────────────────────────────────────┘",
+    "schema": "{\n  \"finding_id\": \"VULN-2026-1048\",\n  \"canonical\": {\"cve\": \"CVE-2025-1949\", \"package\": \"io.netty:netty-handler@4.1.108\", \"scanners\": [\"trivy\", \"snyk\", \"grype\"]},\n  \"reachability\": {\"reachable\": true, \"evidence\": \"SslContextBuilder called in tls/ClientTls.java:88\", \"confidence\": \"high\"},\n  \"threat_intel\": {\"kev\": true, \"epss\": 0.91, \"exploit_maturity\": \"weaponized\"},\n  \"exposure\": {\"internet_facing\": true, \"service_criticality\": \"tier-1\"},\n  \"priority\": {\"rank\": 3, \"severity\": \"critical\", \"rationale\": \"KEV-listed, reachable, internet-facing tier-1\"},\n  \"remediation\": {\"fix\": \"bump to 4.1.118\", \"pr\": \"PR-9102\", \"compat_risk\": \"low\"}\n}"
+  },
+  {
+    "num": 60,
+    "slug": "ai-platform-guardrail-generator",
+    "name": "AI Platform Guardrail Generator",
+    "area": "Platform Engineering",
+    "tldr": "Turn your golden paths and past violations into policy-as-code: guardrails that explain themselves and propose the compliant alternative when they block you.",
+    "complexity": "Medium",
+    "automation": "Supervised automation",
+    "problem_intro": "Platform teams write policies as wiki pages and Slack messages; enforcement happens (or doesn't) at review time, one human at a time.",
+    "problem": [
+      "Golden paths (idea 48) document the right way; nothing stops the 200th service from skipping them.",
+      "Policies live in reviewers' memories, so enforcement is inconsistent and slow.",
+      "When a policy blocks a PR, it rarely says what to do instead — devs treat the platform as an obstacle.",
+      "Writing OPA/Kyverno/Sentinel rules for every convention is specialist work that never gets done."
+    ],
+    "impact": "Guardrails encoded as policy convert platform guidance from documentation into defaults — the safe path becomes the path of least resistance.",
+    "capabilities": [
+      [
+        "Convention mining",
+        "reads golden paths, past review comments, and incident causes to find what rules actually matter"
+      ],
+      [
+        "Policy synthesis",
+        "generates Kyverno/OPA Gatekeeper/Sentinel/Checkov/CEL rules with tests for each convention"
+      ],
+      [
+        "Compliant-alternative suggestions",
+        "on rejection, proposes the exact change that passes — or a mutation that fixes it"
+      ],
+      [
+        "Violation analytics",
+        "tracks which rules fire, on whom, and why; retires rules that never matter"
+      ],
+      [
+        "Exception workflow",
+        "waivers with owners and expiries instead of ad-hoc 'just this once' approvals"
+      ]
+    ],
+    "solution": "A guardrail pipeline for the internal platform: it mines the platform's conventions (golden-path templates, review history, incident root causes), drafts policy-as-code with tests, and ships it through the platform's own GitOps flow. Enforcement surfaces in CI and admission control with human-readable messages and concrete alternatives — 'blocked' always comes with 'here's the diff that passes'. Waivers are first-class: owned, expiring, and visible in the catalog (idea 49).",
+    "steps": [
+      [
+        "Mine",
+        "collect conventions: golden paths, review comments, incident root causes, existing lint rules"
+      ],
+      [
+        "Synthesize",
+        "draft policy-as-code + tests per convention, ranked by past incident cost"
+      ],
+      [
+        "Ship",
+        "PR through the platform repo; staged rollout as audit → warn → enforce"
+      ],
+      [
+        "Assist",
+        "on violation, explain and propose the compliant diff (or mutation)"
+      ],
+      [
+        "Tune",
+        "violation analytics: retire noise, tighten what matters, expire waivers"
+      ]
+    ],
+    "hitl": "Policies ship as reviewed PRs with staged rollout (audit-mode first); every enforcement action explains itself; waivers need a named owner and expiry.",
+    "components": [
+      [
+        "Convention miner",
+        "golden-path templates, review history, incident RCA mining"
+      ],
+      [
+        "Policy composer",
+        "policy-as-code generation with unit tests per rule"
+      ],
+      [
+        "Violation assistant",
+        "inline explanations and compliant-diff suggestions in CI"
+      ],
+      [
+        "Rollout & analytics",
+        "audit-mode metrics, waiver registry, rule effectiveness"
+      ]
+    ],
+    "flow": [
+      "Mining turns implicit platform knowledge into a ranked list of encodable rules.",
+      "Each rule ships as tested policy-as-code, starting in audit mode.",
+      "Violations arrive with an explanation and a diff that passes — rarely a second violation.",
+      "Analytics retire rules that never fire usefully; waivers expire on schedule."
+    ],
+    "platforms": [
+      [
+        "Cost-efficient model tiers",
+        "GPT-5 Mini/Nano · Claude Haiku 4.5 · Gemini Flash · DeepSeek V4 · Mistral Small",
+        "high-volume events (every failure, every alert) at a fraction of frontier cost"
+      ],
+      [
+        "Frontier cloud models",
+        "OpenAI GPT-5.x · Anthropic Claude Opus/Sonnet 4.x · Google Gemini 3 Pro · xAI Grok · Z.ai GLM",
+        "deep reasoning over the assembled context; strongest for root-cause analysis and fix suggestions"
+      ],
+      [
+        "RAG stack",
+        "pgvector · Qdrant · Weaviate · OpenSearch k-NN; embeddings from OpenAI, Cohere Embed, or open BGE-M3",
+        "retrieval over runbooks, docs, wikis, past incidents, and changelogs"
+      ],
+      [
+        "AI observability & evaluation",
+        "Langfuse · Arize Phoenix · LangSmith · W&B Weave · OpenTelemetry GenAI conventions · promptfoo",
+        "tracing of every model and tool call, cost/latency tracking, prompt regression evals"
+      ]
+    ],
+    "integrations": [
+      [
+        "Kyverno / OPA Gatekeeper",
+        "admission-control policies"
+      ],
+      [
+        "Sentinel / Checkov / Conftest / CEL",
+        "pipeline policy engines"
+      ],
+      [
+        "Backstage / IDP",
+        "golden-path templates and waiver visibility"
+      ],
+      [
+        "GitHub / GitLab",
+        "policy PRs and CI enforcement"
+      ],
+      [
+        "Slack",
+        "violation assist and waiver approvals"
+      ]
+    ],
+    "context": [
+      "golden-path templates and docs",
+      "PR review comments and rejections",
+      "incident root causes",
+      "existing policies and their hit rates",
+      "service ownership from catalog"
+    ],
+    "tools": [
+      "Read tier: repos, reviews, incidents, catalog",
+      "Write tier: policy PRs and waiver records only — enforcement lives in the platform's own engines"
+    ],
+    "benefits": [
+      "Golden paths become defaults instead of documentation.",
+      "Every block includes the fix: developers experience the platform as helpful, not hostile.",
+      "Policy coverage grows with incident learning, not platform-team free time.",
+      "Waivers stop being permanent: owned, expiring, visible."
+    ],
+    "security": [
+      "Policies are security controls: their generation, tests, and rollout are audited; the composer cannot weaken existing policies.",
+      "Admission-control changes require platform-owner approval and staged rollout with instant rollback.",
+      "Mined text (review comments, incident notes) is untrusted input: prompt-injection defenses apply."
+    ],
+    "future": [
+      "Mutation-first policies: auto-fix instead of block where mutation is safe.",
+      "Admission policies generated from live cluster state to stop recurring drift.",
+      "Compliance mapping: tie each guardrail to SOC 2/ISO controls for audit evidence."
+    ],
+    "related": [
+      {
+        "num": 48,
+        "name": "AI Golden Path Generator",
+        "slug": "ai-golden-path-generator"
+      },
+      {
+        "num": 47,
+        "name": "AI Internal Developer Platform Assistant",
+        "slug": "ai-internal-developer-platform-assistant"
+      },
+      {
+        "num": 38,
+        "name": "AI Kubernetes Security Analyzer",
+        "slug": "ai-kubernetes-security-analyzer"
+      },
+      {
+        "num": 23,
+        "name": "AI IaC Security Analyzer",
+        "slug": "ai-iac-security-analyzer"
+      }
+    ],
+    "diagram": "┌────────────────────────────────────────────────────┐\n│ Convention mining (paths · reviews · incidents)    │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Policy-as-code synthesis + tests                   │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼  ← Kyverno · OPA · Sentinel\n┌────────────────────────────────────────────────────┐\n│ Staged rollout: audit → warn → enforce             │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Violation assist: explain + fix diff               │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Analytics · waiver expiry · rule retirement        │\n└────────────────────────────────────────────────────┘",
+    "schema": "{\n  \"rule_id\": \"GR-014\",\n  \"convention\": \"all public services require resource limits + PDB\",\n  \"source\": \"mined from incident INC-8093 (OOM cascade) + golden path v3\",\n  \"policy\": {\"engine\": \"kyverno\", \"file\": \"policies/require-limits-pdb.yaml\", \"tests\": 4},\n  \"rollout\": {\"stage\": \"warn\", \"since\": \"2026-10-01\", \"violations_30d\": 9},\n  \"violation_assist\": {\"example\": \"missing PDB on recommendations-svc\", \"suggested_diff\": \"+ PDB minAvailable 1\", \"mutation\": false},\n  \"waivers\": [{\"service\": \"legacy-search\", \"owner\": \"@search\", \"expires\": \"2026-11-30\"}]\n}"
   }
 ];

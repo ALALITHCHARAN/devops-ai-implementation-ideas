@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <a href="#-idea-catalog"><img src="https://img.shields.io/badge/Ideas-50%20documented-blue" alt="Ideas"></a>
+  <a href="#-idea-catalog"><img src="https://img.shields.io/badge/Ideas-60%20documented-blue" alt="Ideas"></a>
   <a href="#-project-status"><img src="https://img.shields.io/badge/Status-Idea%20%26%20Architecture-orange" alt="Status"></a>
   <a href="#-ai-platforms"><img src="https://img.shields.io/badge/AI-Multi--Platform-purple" alt="AI"></a>
   <a href="#-focus-areas"><img src="https://img.shields.io/badge/Focus-DevOps-green" alt="DevOps"></a>
@@ -94,9 +94,9 @@ The goal is **not to add AI everywhere just because AI exists**. The goal is to 
 
 ## 🚧 Project Status
 
-### Current Phase: 💡 Ideas + Architecture — 50 ideas documented
+### Current Phase: 💡 Ideas + Architecture — 60 ideas documented
 
-The initial phase of documenting **50 AI + DevOps implementation ideas** is complete. Every idea in the [Idea Catalog](#-idea-catalog) has a problem statement, an AI opportunity analysis, a proposed solution, and a documented architecture.
+The initial phase of documenting **50 AI + DevOps implementation ideas** is complete, and a second wave brought the catalog to **60 ideas**. Every idea in the [Idea Catalog](#-idea-catalog) has a problem statement, an AI opportunity analysis, a proposed solution, and a documented architecture.
 
 Each idea contains:
 
@@ -113,7 +113,7 @@ This repository does **not** attempt to provide production-ready implementations
 
 ## 🌐 Website (GitHub Pages)
 
-A static site showcasing all 50 ideas lives in [`docs/`](docs/) — hero, searchable/filterable catalog, per-idea detail views with architecture diagrams, and the AI platform landscape. No build step, no frameworks, no trackers.
+A static site showcasing all 60 ideas lives in [`docs/`](docs/) — hero, searchable/filterable catalog, per-idea detail views with architecture diagrams, and the AI platform landscape. No build step, no frameworks, no trackers.
 
 **Deploy it (one-time setup):**
 
@@ -158,7 +158,7 @@ devops-ai-implementation-ideas/
 ├── 04-ai-log-analyzer/
 │   └── ...
 │
-└── ... (50 idea folders in total, numbered NN-kebab-case-name)
+└── ... (60 idea folders in total, numbered NN-kebab-case-name)
 ```
 
 Idea folders are numbered (`NN-kebab-case-name`) and kept intentionally lightweight during the initial phase.
@@ -192,6 +192,8 @@ The repository explores AI applications across these areas of DevOps. All of the
 * AI Test Failure Analyzer
 * AI Build Optimization Assistant
 * AI Deployment Troubleshooting Agent
+* AI Flaky Test Detective
+* AI Database Migration Reviewer
 
 ### ☸️ Kubernetes
 
@@ -203,6 +205,7 @@ The repository explores AI applications across these areas of DevOps. All of the
 * AI Kubernetes Incident Investigator
 * AI HPA Recommendation Assistant
 * AI Cluster Operations Agent
+* AI Kubernetes Upgrade Assistant
 
 ### 🏗️ Infrastructure as Code
 
@@ -212,6 +215,7 @@ The repository explores AI applications across these areas of DevOps. All of the
 * Natural Language → Terraform
 * AI IaC Security Analyzer
 * AI Infrastructure Documentation Generator
+* AI Drift Detective
 
 ### ☁️ Cloud
 
@@ -223,6 +227,7 @@ Potential integrations across AWS, Microsoft Azure, and Google Cloud.
 * AI Cloud Architecture Advisor
 * AI Cloud Incident Investigator
 * AI Resource Optimization Assistant
+* AI Backup & DR Readiness Reviewer
 
 ### 📊 Observability & SRE
 
@@ -234,6 +239,8 @@ Potential integrations across AWS, Microsoft Azure, and Google Cloud.
 * AI Grafana Dashboard Assistant
 * AI Anomaly Investigation Agent
 * AI Postmortem Generator
+* AI SLO & Error Budget Assistant
+* AI Chaos Experiment Designer
 
 Potential ecosystem integrations: Prometheus, Grafana, Loki, OpenTelemetry, Elasticsearch, CloudWatch, Azure Monitor, Google Cloud Monitoring.
 
@@ -245,6 +252,7 @@ Potential ecosystem integrations: Prometheus, Grafana, Loki, OpenTelemetry, Elas
 * AI Cloud Misconfiguration Analyzer
 * AI Security Incident Assistant
 * AI Dependency Risk Analyzer
+* AI Vulnerability Triage Assistant
 
 (AI IAM Policy Reviewer is listed under Cloud and also applies here.)
 
@@ -254,17 +262,14 @@ Potential ecosystem integrations: Prometheus, Grafana, Loki, OpenTelemetry, Elas
 * AI Repository Infrastructure Analyzer
 * AI Pull Request Infrastructure Reviewer
 * AI Developer Environment Troubleshooter
-* AI Environment Configuration Assistant
 * AI Runbook Generator
 
 ### 🏢 Platform Engineering
 
 * AI Internal Developer Platform Assistant
-* AI Platform Troubleshooting Agent
 * AI Golden Path Generator
 * AI Service Catalog Assistant
-* AI Platform Documentation Assistant
-* AI Infrastructure Self-Service Assistant
+* AI Platform Guardrail Generator
 
 ### 🤖 Agentic DevOps
 
@@ -435,7 +440,7 @@ The exact architecture will differ for each idea.
 
 ## 📋 Idea Catalog
 
-The catalog currently documents **50 ideas**, each with a problem statement, AI opportunity analysis, proposed solution, and architecture.
+The catalog currently documents **60 ideas**, each with a problem statement, AI opportunity analysis, proposed solution, and architecture.
 
 | #   | Idea | Area | Status |
 | --- | ---- | ---- | ------ |
@@ -489,6 +494,16 @@ The catalog currently documents **50 ideas**, each with a problem statement, AI 
 | 48  | [AI Golden Path Generator](48-ai-golden-path-generator/README.md) | Platform Engineering | 📐 |
 | 49  | [AI Service Catalog Assistant](49-ai-service-catalog-assistant/README.md) | Platform Engineering | 📐 |
 | 50  | [AI On-Call Copilot](50-ai-on-call-copilot/README.md) | Agentic DevOps | 📐 |
+| 51  | [AI Runbook Generator](51-ai-runbook-generator/README.md) | Developer Experience | 📐 |
+| 52  | [AI Flaky Test Detective](52-ai-flaky-test-detective/README.md) | CI/CD | 📐 |
+| 53  | [AI Database Migration Reviewer](53-ai-database-migration-reviewer/README.md) | CI/CD | 📐 |
+| 54  | [AI Kubernetes Upgrade Assistant](54-ai-kubernetes-upgrade-assistant/README.md) | Kubernetes | 📐 |
+| 55  | [AI Drift Detective](55-ai-drift-detective/README.md) | IaC | 📐 |
+| 56  | [AI Backup & DR Readiness Reviewer](56-ai-backup-dr-reviewer/README.md) | Cloud | 📐 |
+| 57  | [AI SLO & Error Budget Assistant](57-ai-slo-error-budget-assistant/README.md) | Observability & SRE | 📐 |
+| 58  | [AI Chaos Experiment Designer](58-ai-chaos-experiment-designer/README.md) | Observability & SRE | 📐 |
+| 59  | [AI Vulnerability Triage Assistant](59-ai-vulnerability-triage-assistant/README.md) | DevSecOps | 📐 |
+| 60  | [AI Platform Guardrail Generator](60-ai-platform-guardrail-generator/README.md) | Platform Engineering | 📐 |
 
 **Status legend:** 💡 Idea → 📐 Architecture documented → 🛠️ Prototype → ✅ Implemented
 
@@ -547,7 +562,7 @@ Actual implementation costs will depend on the model, token usage, infrastructur
 ### Phase 1 — Ideas ✅
 
 * [x] Create repository
-* [x] Document 50 ideas
+* [x] Document 60 ideas
 * [x] Define the problem for each idea
 * [x] Create an architecture for each idea
 * [x] Document possible AI integrations
