@@ -11030,5 +11030,1826 @@ window.IDEAS = [
     ],
     "diagram": "┌────────────────────────────────────────────────────┐\n│ Convention mining (paths · reviews · incidents)    │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Policy-as-code synthesis + tests                   │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼  ← Kyverno · OPA · Sentinel\n┌────────────────────────────────────────────────────┐\n│ Staged rollout: audit → warn → enforce             │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Violation assist: explain + fix diff               │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Analytics · waiver expiry · rule retirement        │\n└────────────────────────────────────────────────────┘",
     "schema": "{\n  \"rule_id\": \"GR-014\",\n  \"convention\": \"all public services require resource limits + PDB\",\n  \"source\": \"mined from incident INC-8093 (OOM cascade) + golden path v3\",\n  \"policy\": {\"engine\": \"kyverno\", \"file\": \"policies/require-limits-pdb.yaml\", \"tests\": 4},\n  \"rollout\": {\"stage\": \"warn\", \"since\": \"2026-10-01\", \"violations_30d\": 9},\n  \"violation_assist\": {\"example\": \"missing PDB on recommendations-svc\", \"suggested_diff\": \"+ PDB minAvailable 1\", \"mutation\": false},\n  \"waivers\": [{\"service\": \"legacy-search\", \"owner\": \"@search\", \"expires\": \"2026-11-30\"}]\n}"
+  },
+  {
+    "num": 61,
+    "slug": "ai-compliance-evidence-collector",
+    "name": "AI Compliance Evidence Collector",
+    "area": "DevSecOps",
+    "tldr": "Continuously collect and map audit evidence from the systems themselves: SOC 2 / ISO 27001 / PCI controls proven by live configuration, not screenshots.",
+    "complexity": "Medium",
+    "automation": "Assistive",
+    "problem_intro": "Audit season turns engineers into archaeologists: hunting screenshots, exporting configs, and reconstructing proof of controls that should be demonstrable in minutes.",
+    "problem": [
+      "Control evidence (access reviews, encryption settings, change management) lives scattered across consoles and spreadsheets.",
+      "Evidence is collected annually by hand, so drift between audits goes unnoticed — controls exist on paper, not in practice.",
+      "Mapping technical reality to control frameworks requires a translator nobody enjoys being.",
+      "Auditors ask for the same artifacts every year and get inconsistent answers from different people."
+    ],
+    "impact": "Audit prep consumes engineer-weeks per framework per year, and the gap between documented and actual controls is where real risk hides.",
+    "capabilities": [
+      [
+        "Control mapping",
+        "translates framework controls (SOC 2, ISO 27001, PCI, CIS) into checkable technical assertions"
+      ],
+      [
+        "Evidence automation",
+        "pulls live proof — IAM policies, TLS configs, logging enablement, change records — with timestamps"
+      ],
+      [
+        "Gap detection",
+        "finds where the implemented state doesn't satisfy a control, long before the auditor does"
+      ],
+      [
+        "Evidence packaging",
+        "produces auditor-ready artifacts per control with provenance and collection date"
+      ],
+      [
+        "Continuous posture",
+        "re-checks on schedule so compliance reflects today, not last quarter"
+      ]
+    ],
+    "solution": "An evidence pipeline that ingests your control framework, decomposes each control into technical checks across cloud, identity, CI/CD, and code systems, collects proof on schedule via read-only APIs, and maps results to a live compliance posture. Gaps file issues; passing evidence is packaged with provenance for auditors. Works alongside GRC tools rather than replacing them.",
+    "steps": [
+      [
+        "Map",
+        "decompose framework controls into concrete technical checks per system"
+      ],
+      [
+        "Collect",
+        "scheduled read-only evidence gathering across cloud, IAM, CI/CD, and repos"
+      ],
+      [
+        "Evaluate",
+        "score each control: satisfied, partially satisfied, or failing, with evidence attached"
+      ],
+      [
+        "Report",
+        "auditor-ready artifacts with provenance; gap issues routed to owners"
+      ],
+      [
+        "Monitor",
+        "continuous re-checks; posture changes alert the compliance owner"
+      ]
+    ],
+    "hitl": "The collector proves and packages; humans (and auditors) judge. Control interpretations are reviewed with compliance before automation is trusted.",
+    "components": [
+      [
+        "Control library",
+        "framework-to-check mappings, versioned and reviewable"
+      ],
+      [
+        "Evidence collectors",
+        "read-only API integrations per system with provenance capture"
+      ],
+      [
+        "Evaluation engine",
+        "code checks + LLM reasoning for controls that need interpretation"
+      ],
+      [
+        "Evidence vault",
+        "timestamped artifacts, immutable, access-controlled"
+      ]
+    ],
+    "flow": [
+      "Compliance loads the framework and maps controls to systems with the collector.",
+      "Scheduled runs gather live evidence instead of end-of-year screenshots.",
+      "Each control gets a verdict with the proving artifacts and a collection date.",
+      "Gaps become owned issues; auditors receive consistent, provenance-backed exports."
+    ],
+    "platforms": [
+      [
+        "Cost-efficient model tiers",
+        "GPT-5 Mini/Nano · Claude Haiku 4.5 · Gemini Flash · DeepSeek V4 · Mistral Small",
+        "high-volume events (every failure, every alert) at a fraction of frontier cost"
+      ],
+      [
+        "Frontier cloud models",
+        "OpenAI GPT-5.x · Anthropic Claude Opus/Sonnet 4.x · Google Gemini 3 Pro · xAI Grok · Z.ai GLM",
+        "deep reasoning over the assembled context; strongest for root-cause analysis and fix suggestions"
+      ],
+      [
+        "AI observability & evaluation",
+        "Langfuse · Arize Phoenix · LangSmith · W&B Weave · OpenTelemetry GenAI conventions · promptfoo",
+        "tracing of every model and tool call, cost/latency tracking, prompt regression evals"
+      ],
+      [
+        "RAG stack",
+        "pgvector · Qdrant · Weaviate · OpenSearch k-NN; embeddings from OpenAI, Cohere Embed, or open BGE-M3",
+        "retrieval over runbooks, docs, wikis, past incidents, and changelogs"
+      ]
+    ],
+    "integrations": [
+      [
+        "AWS / Azure / GCP",
+        "config, IAM, and encryption evidence"
+      ],
+      [
+        "GitHub / GitLab",
+        "branch protection, review evidence, CODEOWNERS"
+      ],
+      [
+        "Vanta / Drata / LogicGate",
+        "GRC platforms to feed, not replace"
+      ],
+      [
+        "Jira / Linear",
+        "change-management and gap tracking"
+      ],
+      [
+        "Slack / email",
+        "posture digests for compliance owners"
+      ]
+    ],
+    "context": [
+      "control framework definitions",
+      "cloud and identity configuration",
+      "CI/CD and repo settings",
+      "change and incident records",
+      "past audit artifacts"
+    ],
+    "tools": [
+      "Read-only: cloud config APIs, identity stores, repo settings, ticketing",
+      "Write tier: issue filing and evidence-package export only"
+    ],
+    "benefits": [
+      "Audit prep drops from engineer-weeks to a review of already-collected evidence.",
+      "Controls verified continuously, not reconstructed annually.",
+      "Consistent artifacts every audit cycle, with provenance auditors accept.",
+      "The gap between paper compliance and reality becomes visible and fixable."
+    ],
+    "security": [
+      "The collector reads sensitive security configuration: least-privilege read-only roles; evidence stored access-controlled and encrypted.",
+      "Evidence packages may contain security-sensitive detail (vulns, network layout): share exports deliberately, redact where the framework allows.",
+      "Control interpretations are auditable decisions: record which model, prompt, and human reviewed each mapping."
+    ],
+    "future": [
+      "Auto-remediation of common control gaps via PR (with the guardrail generator, idea 60).",
+      "Question-answer copilot for auditor requests during fieldwork.",
+      "Cross-framework dedup: one check satisfying PCI and SOC 2 at once."
+    ],
+    "related": [
+      {
+        "num": 40,
+        "name": "AI Cloud Misconfiguration Analyzer",
+        "slug": "ai-cloud-misconfiguration-analyzer"
+      },
+      {
+        "num": 27,
+        "name": "AI IAM Policy Reviewer",
+        "slug": "ai-iam-policy-reviewer"
+      },
+      {
+        "num": 59,
+        "name": "AI Vulnerability Triage Assistant",
+        "slug": "ai-vulnerability-triage-assistant"
+      },
+      {
+        "num": 60,
+        "name": "AI Platform Guardrail Generator",
+        "slug": "ai-platform-guardrail-generator"
+      }
+    ],
+    "diagram": "┌────────────────────────────────────────────────────┐\n│ Control framework ingestion                        │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼  ← SOC 2 · ISO · PCI\n┌────────────────────────────────────────────────────┐\n│ Decomposition into technical checks                │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Scheduled evidence collection                      │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼  ← read-only APIs\n┌────────────────────────────────────────────────────┐\n│ Control evaluation + gap issues                    │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Auditor-ready artifacts + posture                  │\n└────────────────────────────────────────────────────┘",
+    "cost": "Scheduled weekly evidence collection across a handful of accounts is small-token work: checks run in code, and the model is consulted only for controls needing interpretation or artifact narration. Mini-class models cover the bulk.",
+    "schema": "{\n  \"framework\": \"SOC 2 Trust Services Criteria\",\n  \"control\": \"CC6.1 - Logical access controls\",\n  \"status\": \"satisfied\",\n  \"evidence\": [\n    {\"type\": \"iam_mfa_coverage\", \"source\": \"aws:iam:credential-report\", \"value\": \"187/188 users MFA-enabled\", \"collected\": \"2026-10-12T03:00Z\"},\n    {\"type\": \"access_review\", \"source\": \"jira:ACCESS-2026-Q4\", \"value\": \"quarterly review completed\", \"collected\": \"2026-10-01\"}\n  ],\n  \"gaps\": [],\n  \"last_checked\": \"2026-10-12T03:00Z\"\n}"
+  },
+  {
+    "num": 62,
+    "slug": "ai-change-impact-analyzer",
+    "name": "AI Change Impact Analyzer",
+    "area": "Developer Experience",
+    "tldr": "Answer 'what does this change touch?' before merge: blast radius across code, services, infrastructure, and teams — with evidence.",
+    "complexity": "Medium",
+    "automation": "Assistive",
+    "problem_intro": "Every change is local in the diff and global in effect: the 'small' config tweak that takes down a checkout flow, the library bump that breaks three services nobody remembered.",
+    "problem": [
+      "Ownership and dependency knowledge is scattered: CODEOWNERS, service catalogs, dashboards, and tribal memory disagree.",
+      "Reviewers evaluate the diff, not the blast radius — downstream consumers are invisible in a PR.",
+      "Infrastructure changes look isolated but share blast zones (same cluster, same database, same queue).",
+      "Impact analysis happens after the incident, in the postmortem, where it's called root cause."
+    ],
+    "impact": "Unchecked blast radius is how routine changes become outages — and why 'it worked in staging' is a running joke.",
+    "capabilities": [
+      [
+        "Dependency traversal",
+        "walks code imports, service calls, shared infra, and data flows to find what a change reaches"
+      ],
+      [
+        "Cross-stack impact",
+        "connects app-level changes to infra-level consequences (schema, config, queues, envs)"
+      ],
+      [
+        "Ownership resolution",
+        "names the teams and services affected, using the catalog and CODEOWNERS"
+      ],
+      [
+        "Risk summary",
+        "ranks impact by criticality and past-incident similarity; suggests extra review or staging"
+      ],
+      [
+        "Reviewer routing",
+        "proposes the right reviewers and checks for the true blast radius"
+      ]
+    ],
+    "solution": "A PR-time analyzer that builds a change's blast radius from the union of code dependency graphs, service topology (idea 63), infrastructure relationships, and data schemas — then translates it into a human summary: what's affected, who owns it, what to test, and what to watch after deploy. Posted as a PR comment and a release-checklist section, feeding the deploy risk score (idea 08).",
+    "steps": [
+      [
+        "Diff",
+        "parse the PR: code, config, IaC, schemas, dependencies"
+      ],
+      [
+        "Traverse",
+        "expand impact through code graph, service topology, and shared infrastructure"
+      ],
+      [
+        "Resolve",
+        "map affected surfaces to owners, criticality, and environments"
+      ],
+      [
+        "Summarize",
+        "blast-radius report: affected services, teams, tests, and watch items"
+      ],
+      [
+        "Route",
+        "suggest reviewers and checks; feed the deploy risk score (idea 08)"
+      ]
+    ],
+    "hitl": "Advisory by design: the analyzer informs reviewers and release captains; it never blocks or reroutes by itself.",
+    "components": [
+      [
+        "Diff parser",
+        "unified handling of code, config, IaC, and schema changes"
+      ],
+      [
+        "Graph engine",
+        "code imports, service calls, infra relationships, data flows"
+      ],
+      [
+        "Catalog bridge",
+        "owners, criticality, and environments from the service catalog"
+      ],
+      [
+        "Summarizer",
+        "ranked human-readable impact report with evidence links"
+      ]
+    ],
+    "flow": [
+      "On PR open, the change is parsed across every artifact type it touches.",
+      "Traversal expands the blast radius through runtime dependencies and shared infra.",
+      "Affected surfaces are resolved to owning teams with criticality from the catalog.",
+      "The PR carries the summary; the release pipeline carries the risk score."
+    ],
+    "platforms": [
+      [
+        "Cost-efficient model tiers",
+        "GPT-5 Mini/Nano · Claude Haiku 4.5 · Gemini Flash · DeepSeek V4 · Mistral Small",
+        "high-volume events (every failure, every alert) at a fraction of frontier cost"
+      ],
+      [
+        "Frontier cloud models",
+        "OpenAI GPT-5.x · Anthropic Claude Opus/Sonnet 4.x · Google Gemini 3 Pro · xAI Grok · Z.ai GLM",
+        "deep reasoning over the assembled context; strongest for root-cause analysis and fix suggestions"
+      ],
+      [
+        "AI observability & evaluation",
+        "Langfuse · Arize Phoenix · LangSmith · W&B Weave · OpenTelemetry GenAI conventions · promptfoo",
+        "tracing of every model and tool call, cost/latency tracking, prompt regression evals"
+      ],
+      [
+        "RAG stack",
+        "pgvector · Qdrant · Weaviate · OpenSearch k-NN; embeddings from OpenAI, Cohere Embed, or open BGE-M3",
+        "retrieval over runbooks, docs, wikis, past incidents, and changelogs"
+      ]
+    ],
+    "integrations": [
+      [
+        "GitHub / GitLab",
+        "PR comments and reviewer suggestions"
+      ],
+      [
+        "Service catalog (Backstage etc.)",
+        "ownership and criticality"
+      ],
+      [
+        "OpenTelemetry / tracing",
+        "runtime call edges to complement static analysis"
+      ],
+      [
+        "Terraform / Kubernetes manifests",
+        "infrastructure relationships"
+      ],
+      [
+        "Schema registries",
+        "data-contract impact"
+      ]
+    ],
+    "context": [
+      "the PR diff across artifact types",
+      "code dependency graph",
+      "service topology and call edges",
+      "infrastructure relationships",
+      "ownership and criticality metadata",
+      "past incidents by component"
+    ],
+    "tools": [
+      "Read-only: repo graphs, catalog, trace APIs, IaC state",
+      "Write tier: PR comments and check annotations"
+    ],
+    "benefits": [
+      "Reviewers see consequences, not just diffs.",
+      "The right reviewers get pulled in before merge, not after the incident.",
+      "Test plans target the real blast radius instead of the changed files.",
+      "Deploy risk scores get honest inputs."
+    ],
+    "security": [
+      "Dependency graphs can reveal architecture detail: keep analysis inside your boundary; summaries shared externally are redacted.",
+      "Trace-derived edges can carry PII in spans: use aggregated, name-level data only."
+    ],
+    "future": [
+      "Simulated impact: replay last week's traffic against a what-if model of the change.",
+      "Change-freeze enforcement driven by blast radius (risky changes need a window).",
+      "Cross-repo orchestration: one PR, many affected repos, coordinated review."
+    ],
+    "related": [
+      {
+        "num": 45,
+        "name": "AI Pull Request Infrastructure Reviewer",
+        "slug": "ai-pull-request-infrastructure-reviewer"
+      },
+      {
+        "num": 44,
+        "name": "AI Repository Infrastructure Analyzer",
+        "slug": "ai-repository-infrastructure-analyzer"
+      },
+      {
+        "num": 63,
+        "name": "AI Service Topology Mapper",
+        "slug": "ai-service-topology-mapper"
+      },
+      {
+        "num": 49,
+        "name": "AI Service Catalog Assistant",
+        "slug": "ai-service-catalog-assistant"
+      }
+    ],
+    "diagram": "┌────────────────────────────────────────────────────┐\n│ PR diff parsing (code · IaC · schema)              │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Dependency + topology traversal                    │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Owner + criticality resolution                     │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Blast-radius summary in PR                         │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Reviewer routing + risk feed                       │\n└────────────────────────────────────────────────────┘",
+    "variations": [
+      "Start static-only (code + IaC graphs); add trace-derived runtime edges later.",
+      "Embed in the platform portal as a 'what if I change X?' query, not just PR comments."
+    ],
+    "schema": "{\n  \"pr\": \"orders-service#412\",\n  \"change_types\": [\"code\", \"schema\", \"config\"],\n  \"blast_radius\": {\n    \"services\": [\"orders-service\", \"order-event-worker (consumes orders.change event)\", \"reporting-etl (reads orders.status)\"],\n    \"shared_infra\": [\"pg-orders primary (new index)\", \"kafka topic orders.change\"],\n    \"teams\": [\"@payments\", \"@data-platform\"]\n  },\n  \"risk\": {\"level\": \"medium\", \"drivers\": [\"schema addition consumed by ETL\", \"event payload extended\"], \"similar_past_incidents\": [\"INC-7741\"]},\n  \"suggested_reviewers\": [\"@payments-oncall\", \"@data-platform-lead\"],\n  \"watch_after_deploy\": [\"consumer lag on orders.change\", \"etl freshness metric\"]\n}"
+  },
+  {
+    "num": 63,
+    "slug": "ai-service-topology-mapper",
+    "name": "AI Service Topology Mapper",
+    "area": "Platform Engineering",
+    "tldr": "Discover and maintain your real service topology from telemetry: who calls whom, how often, and through what — instead of a wiki page nobody updates.",
+    "complexity": "Medium",
+    "automation": "Assistive",
+    "problem_intro": "Every architecture diagram is out of date the week it's drawn; meanwhile the traces, metrics, and manifests already know the truth.",
+    "problem": [
+      "Dependency maps live in diagrams and wiki pages that decay the moment they're written.",
+      "Incident triage starts with 'what depends on this?' — answered by pinging people.",
+      "Service catalogs capture declared ownership, not actual runtime relationships.",
+      "Change impact, blast radius, and SLO scoping all silently depend on topology being right."
+    ],
+    "impact": "Without a truthful topology, impact analysis guesses, incidents escalate to the wrong teams, and architecture reviews run on folklore.",
+    "capabilities": [
+      [
+        "Runtime edge discovery",
+        "derives call edges from traces (OpenTelemetry), service mesh data, and metrics"
+      ],
+      [
+        "Declared-vs-actual diff",
+        "compares discovered topology against catalog entries and diagrams; flags drift"
+      ],
+      [
+        "Anomaly-aware mapping",
+        "marks edges that appear only under failure (retries, fallbacks, dead-letter paths)"
+      ],
+      [
+        "Catalog backfill",
+        "proposes topology updates to the service catalog via PR (idea 49)"
+      ],
+      [
+        "Query surface",
+        "natural-language questions: 'what breaks if checkout-api slows down?'"
+      ]
+    ],
+    "solution": "A topology service that consumes trace and mesh telemetry plus IaC manifests, continuously reconstructs the service graph, diffs it against declared topology, and proposes catalog updates. During incidents it becomes the dependency oracle: blast-radius queries, downstream SLO aggregation, and what-if answers — feeding ideas 49, 57, and 62.",
+    "steps": [
+      [
+        "Ingest",
+        "traces, mesh telemetry, DNS/queue configs, and IaC manifests"
+      ],
+      [
+        "Reconstruct",
+        "build the service graph with edge metadata: volume, latency, protocol"
+      ],
+      [
+        "Diff",
+        "compare against declared topology; flag new, missing, and drifted edges"
+      ],
+      [
+        "Propose",
+        "catalog update PRs for confirmed changes"
+      ],
+      [
+        "Serve",
+        "blast-radius and dependency queries during incidents and reviews"
+      ]
+    ],
+    "hitl": "Topology changes are proposed, not pushed: catalog owners confirm via PR; incident answers cite their evidence.",
+    "components": [
+      [
+        "Edge extractor",
+        "spans and mesh data normalized into a call graph with volumes"
+      ],
+      [
+        "Graph store",
+        "versioned topology with history (what changed, when)"
+      ],
+      [
+        "Reconciler",
+        "declared vs. actual comparison, drift classification"
+      ],
+      [
+        "Query interface",
+        "natural-language and API access for impact questions"
+      ]
+    ],
+    "flow": [
+      "Telemetry flows in continuously; the graph updates with evidence and timestamps.",
+      "The reconciler diffs reality against the catalog and drafts update PRs.",
+      "Owners confirm changes; topology history keeps the audit trail.",
+      "Incidents and reviews query the graph instead of paging humans for guesses."
+    ],
+    "platforms": [
+      [
+        "Cost-efficient model tiers",
+        "GPT-5 Mini/Nano · Claude Haiku 4.5 · Gemini Flash · DeepSeek V4 · Mistral Small",
+        "high-volume events (every failure, every alert) at a fraction of frontier cost"
+      ],
+      [
+        "Frontier cloud models",
+        "OpenAI GPT-5.x · Anthropic Claude Opus/Sonnet 4.x · Google Gemini 3 Pro · xAI Grok · Z.ai GLM",
+        "deep reasoning over the assembled context; strongest for root-cause analysis and fix suggestions"
+      ],
+      [
+        "AI observability & evaluation",
+        "Langfuse · Arize Phoenix · LangSmith · W&B Weave · OpenTelemetry GenAI conventions · promptfoo",
+        "tracing of every model and tool call, cost/latency tracking, prompt regression evals"
+      ],
+      [
+        "MCP servers (Model Context Protocol)",
+        "GitHub · kubernetes-mcp-server · mcp-grafana · Terraform MCP · AWS & Azure MCP · Slack · PagerDuty",
+        "standardized, permission-scoped, auditable tool access to DevOps systems"
+      ]
+    ],
+    "integrations": [
+      [
+        "OpenTelemetry / tracing backends",
+        "primary edge evidence"
+      ],
+      [
+        "Istio / Linkerd / Cilium",
+        "mesh-derived service graph"
+      ],
+      [
+        "Service catalog (Backstage etc.)",
+        "declared topology to reconcile"
+      ],
+      [
+        "Kafka / queue topology",
+        "async edges beyond HTTP"
+      ],
+      [
+        "Grafana",
+        "topology overlays on dashboards"
+      ]
+    ],
+    "context": [
+      "distributed traces and span relationships",
+      "mesh service graphs",
+      "queue and event subscriptions",
+      "IaC-declared resources",
+      "declared catalog topology"
+    ],
+    "tools": [
+      "Read-only: trace APIs, mesh APIs, manifests",
+      "Write tier: catalog PR creation only"
+    ],
+    "benefits": [
+      "A living topology with evidence, instead of annual diagram archaeology.",
+      "Incident blast radius answered in seconds, with sources.",
+      "Catalog quality improves as a side effect: declared vs. actual stays honest.",
+      "Feeds SLO scoping (57) and impact analysis (62) with truthful inputs."
+    ],
+    "security": [
+      "Trace data may carry PII in attributes: use span names and service identifiers only; aggregate at the edge level.",
+      "Topology is sensitive reconnaissance data: access follows catalog permissions."
+    ],
+    "future": [
+      "Data-flow layer: classify edges carrying PII for compliance mapping (idea 61).",
+      "Failure-graph mode: edges observed only during incidents, for resilience review.",
+      "Multi-cluster and multi-cloud federation of topology views."
+    ],
+    "related": [
+      {
+        "num": 49,
+        "name": "AI Service Catalog Assistant",
+        "slug": "ai-service-catalog-assistant"
+      },
+      {
+        "num": 34,
+        "name": "AI Grafana Dashboard Assistant",
+        "slug": "ai-grafana-dashboard-assistant"
+      },
+      {
+        "num": 32,
+        "name": "AI Root Cause Analysis Assistant",
+        "slug": "ai-root-cause-analysis-assistant"
+      },
+      {
+        "num": 62,
+        "name": "AI Change Impact Analyzer",
+        "slug": "ai-change-impact-analyzer"
+      }
+    ],
+    "diagram": "┌────────────────────────────────────────────────────┐\n│ Telemetry + manifest ingestion                     │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Service graph reconstruction                       │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Declared-vs-actual diff                            │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Catalog update PRs                                 │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼  ← owner confirmed\n┌────────────────────────────────────────────────────┐\n│ Blast-radius query surface                         │\n└────────────────────────────────────────────────────┘",
+    "schema": "{\n  \"service\": \"checkout-api\",\n  \"upstream\": [\n    {\"caller\": \"web-bff\", \"protocol\": \"http\", \"rps_7d_p50\": 412, \"evidence\": \"otel spans + istio\"}\n  ],\n  \"downstream\": [\n    {\"dependency\": \"pg-orders\", \"protocol\": \"sql\", \"rps_7d_p50\": 380, \"evidence\": \"otel db spans\"},\n    {\"dependency\": \"kafka:orders.change\", \"protocol\": \"kafka-produce\", \"rps_7d_p50\": 95, \"evidence\": \"manifest + metrics\"}\n  ],\n  \"reconciliation\": {\"new_edges\": 1, \"missing_edges\": 0, \"catalog_pr\": \"backstage#2210\"},\n  \"blast_radius_hint\": {\"if_slow\": [\"web-bff latency SLO at risk\", \"checkout conversion funnel\"]}\n}"
+  },
+  {
+    "num": 64,
+    "slug": "ai-database-performance-advisor",
+    "name": "AI Database Performance Advisor",
+    "area": "Cloud",
+    "tldr": "Explain slow queries before they become incidents: plan analysis, index recommendations, and capacity signals grounded in your real workload statistics.",
+    "complexity": "Medium",
+    "automation": "Assistive",
+    "problem_intro": "Database performance degrades quietly — a query that ran in 10ms meets new data volume, a plan flips, a connection pool saturates — and the first alert is usually user-facing latency.",
+    "problem": [
+      "Slow query logs and workload statistics exist, but turning them into safe actions (indexes, rewrites, config) is specialist work.",
+      "Index recommendations from tools ignore write cost: adding the 'obvious' index can degrade ingest-heavy tables.",
+      "Plan regressions after stats or upgrade changes are invisible until someone diffs plans by hand.",
+      "Connection-pool, lock, and bloat issues hide between query tuning and infrastructure monitoring."
+    ],
+    "impact": "Database latency is often the last mile of every user request — tuning it buys back latency and headroom across the whole stack.",
+    "capabilities": [
+      [
+        "Plan analysis",
+        "reads EXPLAIN plans and workload stats to explain why queries are slow, in plain language"
+      ],
+      [
+        "Index engineering",
+        "recommends indexes with write-cost accounting and workload-aware column ordering"
+      ],
+      [
+        "Regression detection",
+        "tracks plan changes and latency distributions per query over time; names the flip point"
+      ],
+      [
+        "Saturation diagnosis",
+        "correlates pool exhaustion, locks, and bloat with query patterns"
+      ],
+      [
+        "Safe application",
+        "drafts migrations (CONCURRENTLY, online DDL) with the migration reviewer's discipline (idea 53)"
+      ]
+    ],
+    "solution": "A database advisor that consumes your engine's own telemetry (pg_stat_statements, slow log, performance schema, cloud performance insights), explains the top cost drivers in plain language, and proposes changes as reviewed artifacts: index DDL with write-cost estimates, query rewrites, and configuration tuning — each with expected effect and rollback. Continuous mode watches for plan flips and latency drift between deploys.",
+    "steps": [
+      [
+        "Collect",
+        "workload stats, plans, and latency distributions from engine telemetry"
+      ],
+      [
+        "Rank",
+        "top cost drivers by total DB time, not single-query worst case"
+      ],
+      [
+        "Explain",
+        "per query: why it's slow (scan, join order, spill, lock, pool)"
+      ],
+      [
+        "Propose",
+        "index/rewrite/config changes with expected effect and write-cost tradeoffs"
+      ],
+      [
+        "Verify",
+        "post-change validation against the same telemetry; regressions flagged"
+      ]
+    ],
+    "hitl": "Advisory: every change ships as a reviewed migration or config PR; the advisor never alters the database directly.",
+    "components": [
+      [
+        "Telemetry collector",
+        "pg_stat_statements, performance schema, slow logs, cloud insights"
+      ],
+      [
+        "Plan analyzer",
+        "EXPLAIN digestion with regression tracking per query fingerprint"
+      ],
+      [
+        "Advisor engine",
+        "index and rewrite recommendations with write-cost modeling"
+      ],
+      [
+        "Verification loop",
+        "before/after comparison on the same workload slices"
+      ]
+    ],
+    "flow": [
+      "Telemetry lands on schedule; the advisor ranks what actually costs the database time.",
+      "Each top query gets a diagnosis grounded in its real plans and statistics.",
+      "Proposals arrive as reviewable DDL and PRs with expected effect and tradeoffs.",
+      "After application, the same telemetry confirms the win or flags the regression."
+    ],
+    "platforms": [
+      [
+        "Cost-efficient model tiers",
+        "GPT-5 Mini/Nano · Claude Haiku 4.5 · Gemini Flash · DeepSeek V4 · Mistral Small",
+        "high-volume events (every failure, every alert) at a fraction of frontier cost"
+      ],
+      [
+        "Frontier cloud models",
+        "OpenAI GPT-5.x · Anthropic Claude Opus/Sonnet 4.x · Google Gemini 3 Pro · xAI Grok · Z.ai GLM",
+        "deep reasoning over the assembled context; strongest for root-cause analysis and fix suggestions"
+      ],
+      [
+        "AI observability & evaluation",
+        "Langfuse · Arize Phoenix · LangSmith · W&B Weave · OpenTelemetry GenAI conventions · promptfoo",
+        "tracing of every model and tool call, cost/latency tracking, prompt regression evals"
+      ],
+      [
+        "Model routing & AI gateways",
+        "LiteLLM · OpenRouter · Portkey · Kong AI Gateway · Cloudflare AI Gateway",
+        "provider-agnostic routing with fallbacks, budgets, caching, and audit logs"
+      ]
+    ],
+    "integrations": [
+      [
+        "PostgreSQL / MySQL / SQL Server",
+        "telemetry and EXPLAIN"
+      ],
+      [
+        "RDS / Cloud SQL / Azure SQL",
+        "performance insights APIs"
+      ],
+      [
+        "PgBouncer / proxies",
+        "pool diagnostics"
+      ],
+      [
+        "Grafana / Prometheus",
+        "latency and saturation dashboards"
+      ],
+      [
+        "GitHub",
+        "migration PRs"
+      ]
+    ],
+    "context": [
+      "workload statistics per query fingerprint",
+      "execution plans",
+      "table and index sizes",
+      "lock and pool metrics",
+      "schema and constraint definitions"
+    ],
+    "tools": [
+      "Read-only: engine telemetry, EXPLAIN execution, catalog queries",
+      "Write tier: migration PR creation only"
+    ],
+    "benefits": [
+      "DB time spent where it matters: ranked by total workload cost.",
+      "Index recommendations that respect write cost and ingest patterns.",
+      "Plan regressions caught by fingerprint tracking, not by user complaints.",
+      "Every change reviewed, reversible, and verified against the same telemetry."
+    ],
+    "security": [
+      "Query texts can embed PII in literals: normalize fingerprints and redact literals before model calls.",
+      "EXPLAIN ANALYZE executes queries: prefer read-replicas and statement timeouts; plain EXPLAIN where possible.",
+      "Telemetry access is read-only by role design; no credentials ever reach the model."
+    ],
+    "future": [
+      "Workload simulation: replay sampled production patterns against proposed indexes.",
+      "Cost coupling: tie query efficiency to cloud spend (idea 26) for managed databases.",
+      "Cross-database join hygiene: flag cross-service joins that should be API contracts."
+    ],
+    "related": [
+      {
+        "num": 53,
+        "name": "AI Database Migration Reviewer",
+        "slug": "ai-database-migration-reviewer"
+      },
+      {
+        "num": 25,
+        "name": "AI Cloud Troubleshooting Assistant",
+        "slug": "ai-cloud-troubleshooting-assistant"
+      },
+      {
+        "num": 26,
+        "name": "AI Cloud Cost Analysis Assistant",
+        "slug": "ai-cloud-cost-analysis-assistant"
+      },
+      {
+        "num": 32,
+        "name": "AI Root Cause Analysis Assistant",
+        "slug": "ai-root-cause-analysis-assistant"
+      }
+    ],
+    "diagram": "┌────────────────────────────────────────────────────┐\n│ Workload telemetry ingestion                       │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Cost-driver ranking (total time)                   │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Per-query diagnosis + plans                        │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Index / rewrite / config proposals                 │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Post-change verification loop                      │\n└────────────────────────────────────────────────────┘",
+    "schema": "{\n  \"database\": \"pg-orders-replica\",\n  \"window\": \"7d\",\n  \"top_findings\": [\n    {\n      \"query_fingerprint\": \"SELECT ... FROM orders JOIN customers ...\",\n      \"total_db_time_share\": 0.34,\n      \"diagnosis\": \"seq scan on orders (412M rows) due to status filter without index\",\n      \"proposal\": {\"kind\": \"index\", \"ddl\": \"CREATE INDEX CONCURRENTLY idx_orders_status_created ON orders (status, created_at)\", \"expected\": \"p95 1.8s to 120ms\", \"write_cost\": \"low (status low cardinality)\"},\n      \"evidence\": {\"plan_lines\": [\"Seq Scan on orders ... rows=412000000\"], \"calls_7d\": 812000}\n    }\n  ],\n  \"regressions\": [{\"fingerprint\": \"...\", \"flipped\": \"2026-10-09\", \"cause\": \"stats refresh: hash join became nested loop\"}]\n}"
+  },
+  {
+    "num": 65,
+    "slug": "ai-container-image-optimizer",
+    "name": "AI Container Image Optimizer",
+    "area": "CI/CD",
+    "tldr": "Shrink, harden, and speed up container images automatically: layer analysis, base-image upgrades, and rebuild PRs — with size, CVE, and cache wins reported per build.",
+    "complexity": "Low",
+    "automation": "Assistive",
+    "problem_intro": "Images accrete: a base image from 2022, build tools left in runtime layers, a 1.8GB blob that slows every deploy, scan, and cold start.",
+    "problem": [
+      "Nobody owns image diet: multi-stage builds, layer ordering, and .dockerignore are crafts applied once and forgotten.",
+      "Base images drift: CVEs accumulate and cache-friendly bases go stale because upgrades are chores.",
+      "Slow builds and pushes tax every pipeline run; cache misses waste runner-minutes organization-wide.",
+      "Distroless/minimal migrations stall on 'which binary needs what?'"
+    ],
+    "impact": "Image size multiplies across every pull, scan, and node; leaner images are pure wins for speed, cost, and attack surface.",
+    "capabilities": [
+      [
+        "Layer archaeology",
+        "attributes size to layers and files; names the top offenders and their origin"
+      ],
+      [
+        "Base-image matching",
+        "recommends slimmer/safer bases compatible with the runtime (distroless, alpine, chainguard)"
+      ],
+      [
+        "Dockerfile refactoring",
+        "multi-stage rewrites, dependency-layer ordering, .dockerignore authoring"
+      ],
+      [
+        "Rebuild PRs",
+        "opens PRs with before/after size, CVE delta, and build-time estimates"
+      ],
+      [
+        "Cache strategy",
+        "diagnoses cache misses in CI and proposes ordering and lockfile fixes (feeds idea 11)"
+      ]
+    ],
+    "solution": "An image analyzer wired into CI: on each build it inspects the produced image (layers, packages, history), compares against available bases and prior builds, and where wins are found opens a refactor PR — multi-stage split, base upgrade, cache reordering — with measured before/after evidence. Works per-repo with org-wide reporting on the biggest aggregate offenders.",
+    "steps": [
+      [
+        "Inspect",
+        "analyze the built image: layers, packages, file sizes, history"
+      ],
+      [
+        "Compare",
+        "against slimmer bases, prior builds, and org conventions"
+      ],
+      [
+        "Propose",
+        "Dockerfile refactor PR with expected size/CVE/cache impact"
+      ],
+      [
+        "Validate",
+        "CI build proves the numbers; smoke tests gate the PR"
+      ],
+      [
+        "Report",
+        "org dashboard: total bytes, scan time, and pull time reclaimed"
+      ]
+    ],
+    "hitl": "Refactors ship as PRs with CI evidence; runtime-compatibility smoke tests must pass before merge — the optimizer never force-pushes images.",
+    "components": [
+      [
+        "Image inspector",
+        "layer/file/package analysis plus registry metadata"
+      ],
+      [
+        "Refactor planner",
+        "Dockerfile transformations validated by re-build"
+      ],
+      [
+        "PR drafter",
+        "evidence-attached refactor PRs"
+      ],
+      [
+        "Reporting",
+        "aggregate savings and offender leaderboard"
+      ]
+    ],
+    "flow": [
+      "CI publishes the image; the inspector breaks it into layers and packages.",
+      "The planner matches the runtime against slimmer bases and missing optimizations.",
+      "A refactor PR lands with measured before/after: size, CVEs, build time.",
+      "Smoke tests guard runtime compatibility; the dashboard tracks org-wide savings."
+    ],
+    "platforms": [
+      [
+        "Cost-efficient model tiers",
+        "GPT-5 Mini/Nano · Claude Haiku 4.5 · Gemini Flash · DeepSeek V4 · Mistral Small",
+        "high-volume events (every failure, every alert) at a fraction of frontier cost"
+      ],
+      [
+        "AI coding agents (human-invoked)",
+        "Claude Code · OpenAI Codex · GitHub Copilot coding agent · Cursor · Cline · OpenHands",
+        "author the suggested fix as a reviewed pull request"
+      ],
+      [
+        "AI observability & evaluation",
+        "Langfuse · Arize Phoenix · LangSmith · W&B Weave · OpenTelemetry GenAI conventions · promptfoo",
+        "tracing of every model and tool call, cost/latency tracking, prompt regression evals"
+      ],
+      [
+        "Model routing & AI gateways",
+        "LiteLLM · OpenRouter · Portkey · Kong AI Gateway · Cloudflare AI Gateway",
+        "provider-agnostic routing with fallbacks, budgets, caching, and audit logs"
+      ]
+    ],
+    "integrations": [
+      [
+        "Docker / BuildKit / podman",
+        "image build and inspection"
+      ],
+      [
+        "Registries (ECR, GAR, Harbor, GHCR)",
+        "image metadata and history"
+      ],
+      [
+        "Trivy / Grype",
+        "CVE delta per proposal"
+      ],
+      [
+        "GitHub Actions / GitLab CI",
+        "pipeline integration and PRs"
+      ],
+      [
+        "Kubernetes",
+        "pull-time and cold-start impact estimates"
+      ]
+    ],
+    "context": [
+      "image layers, packages, and history",
+      "Dockerfile and build context",
+      "available base images and their CVE posture",
+      "CI cache behavior",
+      "runtime requirements from manifests"
+    ],
+    "tools": [
+      "Read-only: registry APIs, image inspection, scan reports",
+      "Write tier: PR creation with refactor Dockerfiles"
+    ],
+    "benefits": [
+      "Smaller images: faster deploys, scans, cold starts, and less egress.",
+      "CVE surface shrinks as bases stay current by default.",
+      "Build caches hit more often; runner-minutes drop.",
+      "A leaderboard makes the biggest offenders someone's (easy) fix."
+    ],
+    "security": [
+      "Proposed bases are evaluated for provenance and maintenance health — shrinking an image must not mean trusting a random one.",
+      "Analysis metadata stays internal: image inventories reveal stack details.",
+      "PRs pass the same CI gates as human changes; no direct registry writes."
+    ],
+    "future": [
+      "SBOM diffing integrated: prove CVE reduction per refactor (with idea 42).",
+      "Attestation wiring: signed, minimal images as golden-path defaults (idea 60).",
+      "Auto-merge trusted base patch bumps with measured zero-delta smoke tests."
+    ],
+    "related": [
+      {
+        "num": 37,
+        "name": "AI Container Vulnerability Explainer",
+        "slug": "ai-container-vulnerability-explainer"
+      },
+      {
+        "num": 11,
+        "name": "AI Build Optimization Assistant",
+        "slug": "ai-build-optimization-assistant"
+      },
+      {
+        "num": 1,
+        "name": "AI Pipeline Failure Analyzer",
+        "slug": "ai-pipeline-failure-analyzer"
+      },
+      {
+        "num": 38,
+        "name": "AI Kubernetes Security Analyzer",
+        "slug": "ai-kubernetes-security-analyzer"
+      }
+    ],
+    "diagram": "┌────────────────────────────────────────────────────┐\n│ Image inspection (layers · packages)               │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Base + layer comparison                            │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Refactor PR with evidence                          │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼  ← before/after\n┌────────────────────────────────────────────────────┐\n│ CI validation + smoke tests                        │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Org-wide savings report                            │\n└────────────────────────────────────────────────────┘",
+    "schema": "{\n  \"image\": \"registry/orders-service:1.42.0\",\n  \"current\": {\"size_mb\": 1840, \"layers\": 22, \"critical_cves\": 6},\n  \"findings\": [\n    {\"issue\": \"build toolchain in runtime layer\", \"bytes\": 720000000, \"fix\": \"multi-stage split\"},\n    {\"issue\": \"base debian:11 -> distroless/base-nossl candidate\", \"delta\": \"-610 MB, -6 CVEs\", \"risk\": \"low (static go binary)\"}\n  ],\n  \"proposal\": {\"pr\": \"PR-183\", \"projected_size_mb\": 512, \"projected_cves\": 0, \"smoke\": \"required\"}\n}"
+  },
+  {
+    "num": 66,
+    "slug": "ai-alert-quality-engineer",
+    "name": "AI Alert Quality Engineer",
+    "area": "Observability & SRE",
+    "tldr": "Reduce pager noise systematically: deduplicate overlapping alerts, correlate bursts into incidents, and tune thresholds from evidence — as reviewed changes, not vibes.",
+    "complexity": "Medium",
+    "automation": "Assistive",
+    "problem_intro": "Alert fatigue is self-inflicted: overlapping rules, static thresholds, and no deduplication mean the pager cries wolf until engineers mute it.",
+    "problem": [
+      "Alert rules accrete per-incident; nobody removes the alert for the service that was renamed a year ago.",
+      "Static thresholds ignore daily and weekly seasonality, generating known-noise pages.",
+      "One underlying failure fans out into dozens of pages from dependent services.",
+      "Alert quality is nobody's metric: pages-per-shift and noise ratio aren't measured, so they can't improve."
+    ],
+    "impact": "Every noisy page buys the next real alert a little less attention — fatigue is the tax that turns minor incidents into missed ones.",
+    "capabilities": [
+      [
+        "Noise analytics",
+        "pages-per-rule, acknowledgment latency, action-rate: the metrics that name the worst offenders"
+      ],
+      [
+        "Burst correlation",
+        "groups alert storms into single causes using topology and timing (idea 63)"
+      ],
+      [
+        "Seasonality-aware tuning",
+        "proposes dynamic thresholds and multi-window burns informed by history (idea 57)"
+      ],
+      [
+        "Rule hygiene",
+        "finds dead rules (renamed metrics/services), duplicates, and never-actioned alerts"
+      ],
+      [
+        "Change via PR",
+        "alert rule edits as reviewed changes with before/after page simulations"
+      ]
+    ],
+    "solution": "A weekly alert-quality review that never forgets: it computes per-rule noise metrics from your alerting history, correlates storms to root causes via topology, and files reviewed PRs — tune, deduplicate, route differently, or retire. Simulations show exactly how many past pages each change would have removed, and which real incidents would still have paged.",
+    "steps": [
+      [
+        "Measure",
+        "per-rule noise metrics from alert and acknowledgment history"
+      ],
+      [
+        "Correlate",
+        "group alert bursts into causes using topology and timing"
+      ],
+      [
+        "Diagnose",
+        "why each noisy rule misfires: threshold, duplication, staleness, fan-out"
+      ],
+      [
+        "Propose",
+        "tune/dedup/retire/reroute changes as PRs with page simulations"
+      ],
+      [
+        "Track",
+        "noise-ratio trend after each change; revert what over-filters"
+      ]
+    ],
+    "hitl": "Every alert change is a reviewed PR with simulation evidence; paging behavior changes require on-call owners' sign-off.",
+    "components": [
+      [
+        "History analyzer",
+        "per-rule page counts, ack times, action rates, sleep patterns"
+      ],
+      [
+        "Correlation engine",
+        "storm grouping with topology and timing evidence"
+      ],
+      [
+        "Simulation harness",
+        "replays proposed rules against recorded history"
+      ],
+      [
+        "PR drafter",
+        "alert rule changes with before/after evidence"
+      ]
+    ],
+    "flow": [
+      "Weekly, the analyzer ranks rules by noise contributed and value delivered.",
+      "Storms are traced to single causes; fan-out candidates for deduplication are named.",
+      "Each proposal ships as a PR with a simulation: pages removed, incidents kept.",
+      "Noise-ratio trends prove improvement; over-filtering gets caught by the same loop."
+    ],
+    "platforms": [
+      [
+        "Cost-efficient model tiers",
+        "GPT-5 Mini/Nano · Claude Haiku 4.5 · Gemini Flash · DeepSeek V4 · Mistral Small",
+        "high-volume events (every failure, every alert) at a fraction of frontier cost"
+      ],
+      [
+        "Frontier cloud models",
+        "OpenAI GPT-5.x · Anthropic Claude Opus/Sonnet 4.x · Google Gemini 3 Pro · xAI Grok · Z.ai GLM",
+        "deep reasoning over the assembled context; strongest for root-cause analysis and fix suggestions"
+      ],
+      [
+        "AI observability & evaluation",
+        "Langfuse · Arize Phoenix · LangSmith · W&B Weave · OpenTelemetry GenAI conventions · promptfoo",
+        "tracing of every model and tool call, cost/latency tracking, prompt regression evals"
+      ],
+      [
+        "RAG stack",
+        "pgvector · Qdrant · Weaviate · OpenSearch k-NN; embeddings from OpenAI, Cohere Embed, or open BGE-M3",
+        "retrieval over runbooks, docs, wikis, past incidents, and changelogs"
+      ]
+    ],
+    "integrations": [
+      [
+        "Prometheus / Alertmanager",
+        "rules, silences, and notification history"
+      ],
+      [
+        "PagerDuty / Opsgenie",
+        "page outcomes and acknowledgment data"
+      ],
+      [
+        "Grafana",
+        "alert panel evidence"
+      ],
+      [
+        "GitHub",
+        "rule-change PRs"
+      ],
+      [
+        "Slack",
+        "weekly alert-quality digest"
+      ]
+    ],
+    "context": [
+      "alert rules and their definitions",
+      "firing and acknowledgment history",
+      "topology for burst correlation",
+      "SLO burn data",
+      "on-call feedback on page quality"
+    ],
+    "tools": [
+      "Read-only: alert APIs, paging history, topology",
+      "Write tier: rule-change PRs (owner-approved)"
+    ],
+    "benefits": [
+      "A managed noise ratio instead of a slowly rising pager tax.",
+      "Storms page once, not forty times.",
+      "Dead and duplicate rules retire with evidence, not politics.",
+      "Every paging change is simulated before it touches the on-call."
+    ],
+    "security": [
+      "Alert payloads can include customer-impacting detail: aggregate before model calls.",
+      "Tuning that suppresses pages is riskier than noise: simulations and owner sign-off are mandatory, and changes are revertable."
+    ],
+    "future": [
+      "Feedback loop from the on-call copilot (idea 50): which pages actually led to action.",
+      "Alert-as-code linting in CI: new rules are simulated before they exist.",
+      "Cross-team noise budgets with trend targets."
+    ],
+    "related": [
+      {
+        "num": 30,
+        "name": "AI Alert Investigation Assistant",
+        "slug": "ai-alert-investigation-assistant"
+      },
+      {
+        "num": 35,
+        "name": "AI Anomaly Investigation Agent",
+        "slug": "ai-anomaly-investigation-agent"
+      },
+      {
+        "num": 57,
+        "name": "AI SLO & Error Budget Assistant",
+        "slug": "ai-slo-error-budget-assistant"
+      },
+      {
+        "num": 31,
+        "name": "AI Incident Summarizer",
+        "slug": "ai-incident-summarizer"
+      }
+    ],
+    "diagram": "┌────────────────────────────────────────────────────┐\n│ Alert history + rule inventory                     │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Per-rule noise analytics                           │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Burst correlation via topology                     │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Tune / dedup / retire PRs                          │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼  ← simulated first\n┌────────────────────────────────────────────────────┐\n│ Noise-ratio trend tracking                         │\n└────────────────────────────────────────────────────┘",
+    "schema": "{\n  \"period\": \"2026-W41\",\n  \"noise_metrics\": {\"pages_total\": 214, \"actioned_within_15m\": 0.31, \"top_offender\": \"cpu>80% (static, 6 services)\", \"storm_groups\": 9},\n  \"proposals\": [\n    {\"rule\": \"cpu>80%@prod-api\", \"action\": \"replace with multiwindow burn\", \"simulated\": {\"pages_removed\": 38, \"real_incidents_missed\": 0}},\n    {\"rule\": \"orders-lag@worker-*\", \"action\": \"dedupe into one alert\", \"simulated\": {\"pages_removed\": 22, \"real_incidents_missed\": 0}}\n  ],\n  \"trend\": {\"noise_ratio_4w\": [0.72, 0.68, 0.55, 0.48]}\n}"
+  },
+  {
+    "num": 67,
+    "slug": "ai-feature-flag-lifecycle-assistant",
+    "name": "AI Feature Flag Lifecycle Assistant",
+    "area": "Platform Engineering",
+    "tldr": "Manage flag debt automatically: find stale flags, verify kill-switch readiness, and clean up through reviewed PRs — so flags stay a tool, not a tar pit.",
+    "complexity": "Medium",
+    "automation": "Assistive",
+    "problem_intro": "Feature flags are created in minutes and forgotten for years: hundreds of dead toggles wrapping code paths nobody remembers how to reach.",
+    "problem": [
+      "Flags accumulate without an expiry culture; the codebase carries years of dead branches.",
+      "Kill switches that would save an incident were never tested — flipping them is a leap of faith.",
+      "Flag state and code drift: removals half-done leave orphaned checks and config keys.",
+      "Combinatorial states (who sees what, in which env) are invisible; testing coverage of flag permutations is luck."
+    ],
+    "impact": "Flag debt taxes every deploy, hides untested code paths in production, and turns the emergency lever into a gamble exactly when it's needed most.",
+    "capabilities": [
+      [
+        "Inventory & staleness",
+        "correlates flag definitions, code references, and evaluation telemetry to find dead and zombie flags"
+      ],
+      [
+        "Kill-switch testing",
+        "proposes safe simulations proving each flag's off-state works (staging, canary, or shadow evaluation)"
+      ],
+      [
+        "Cleanup drafting",
+        "removal PRs that delete the flag and both code paths correctly, env config included"
+      ],
+      [
+        "Expiry governance",
+        "flags get born with owners and expiry dates; renewals are explicit"
+      ],
+      [
+        "Exposure mapping",
+        "which users and segments each flag affects — useful for launches and incidents"
+      ]
+    ],
+    "solution": "A flag governance layer over your flag system (LaunchDarkly, Flagsmith, Unleash, OpenFeature, homegrown): it merges the flag registry with the code index and evaluation telemetry, classifies lifecycle state (active, dormant, dead), proposes kill-switch drills, and drafts cleanup PRs. Expiry metadata becomes policy: new flags declare an owner and review date at creation, enforced by the guardrail generator (idea 60).",
+    "steps": [
+      [
+        "Inventory",
+        "merge flag registry, code references, and evaluation telemetry"
+      ],
+      [
+        "Classify",
+        "active / dormant / dead per flag, with last-evaluation evidence"
+      ],
+      [
+        "Drill",
+        "propose kill-switch tests for flags that would matter in incidents"
+      ],
+      [
+        "Clean",
+        "draft removal PRs for dead flags; orphaned config included"
+      ],
+      [
+        "Govern",
+        "expiry metadata and renewal prompts at creation and review"
+      ]
+    ],
+    "hitl": "Removals and drills are owner-approved; the assistant never flips flags in production — drills run in staging or as shadow evaluations.",
+    "components": [
+      [
+        "Inventory engine",
+        "registry/API sync plus code-index cross-reference"
+      ],
+      [
+        "Lifecycle classifier",
+        "telemetry-backed staleness verdicts with evidence"
+      ],
+      [
+        "Cleanup drafter",
+        "flag and code-path removal PRs across repos"
+      ],
+      [
+        "Governance hooks",
+        "creation-time metadata checks and renewal workflows"
+      ]
+    ],
+    "flow": [
+      "The inventory reconciles what the flag system, the code, and production actually do.",
+      "Dead flags surface with evidence; dormant ones get an owner ping before death row.",
+      "Cleanup PRs remove both branches of the toggle, config keys included.",
+      "Expiry metadata keeps the inventory from refilling."
+    ],
+    "platforms": [
+      [
+        "Cost-efficient model tiers",
+        "GPT-5 Mini/Nano · Claude Haiku 4.5 · Gemini Flash · DeepSeek V4 · Mistral Small",
+        "high-volume events (every failure, every alert) at a fraction of frontier cost"
+      ],
+      [
+        "Frontier cloud models",
+        "OpenAI GPT-5.x · Anthropic Claude Opus/Sonnet 4.x · Google Gemini 3 Pro · xAI Grok · Z.ai GLM",
+        "deep reasoning over the assembled context; strongest for root-cause analysis and fix suggestions"
+      ],
+      [
+        "AI observability & evaluation",
+        "Langfuse · Arize Phoenix · LangSmith · W&B Weave · OpenTelemetry GenAI conventions · promptfoo",
+        "tracing of every model and tool call, cost/latency tracking, prompt regression evals"
+      ],
+      [
+        "AI coding agents (human-invoked)",
+        "Claude Code · OpenAI Codex · GitHub Copilot coding agent · Cursor · Cline · OpenHands",
+        "author the suggested fix as a reviewed pull request"
+      ]
+    ],
+    "integrations": [
+      [
+        "LaunchDarkly / Flagsmith / OpenFeature / Unleash",
+        "flag registries and evaluation data"
+      ],
+      [
+        "GitHub / GitLab",
+        "cleanup PRs and expiry checks"
+      ],
+      [
+        "Kubernetes / config stores",
+        "orphaned config detection"
+      ],
+      [
+        "Backstage / IDP",
+        "flag health per service in the catalog"
+      ],
+      [
+        "Slack",
+        "renewal nudges to flag owners"
+      ]
+    ],
+    "context": [
+      "flag registry and targeting rules",
+      "evaluation telemetry (who saw what)",
+      "code references from the index",
+      "environment configuration",
+      "ownership metadata"
+    ],
+    "tools": [
+      "Read-only: flag APIs, code index, evaluation events",
+      "Write tier: PR creation and owner notifications; no production flag writes"
+    ],
+    "benefits": [
+      "Flag count and code-path complexity trend down, not up.",
+      "Kill switches proven before the incident that needs them.",
+      "Cleaner production: dormant code paths and orphaned config removed.",
+      "New flags born with owners and expiry dates, enforced automatically."
+    ],
+    "security": [
+      "Evaluation telemetry can be user-level: aggregate before analysis; segment data stays in the flag system.",
+      "Cleanup PRs touching auth or billing flags get extra review gates.",
+      "The assistant holds read-only flag credentials — flag flipping stays human."
+    ],
+    "future": [
+      "Progressive-delivery integration: tie flag rollout state to SLO burn (ideas 57 and 08).",
+      "Permutation test generation: cover the flag combinations that matter.",
+      "Flag-cost accounting: which flags carry operational burden per team."
+    ],
+    "related": [
+      {
+        "num": 60,
+        "name": "AI Platform Guardrail Generator",
+        "slug": "ai-platform-guardrail-generator"
+      },
+      {
+        "num": 48,
+        "name": "AI Golden Path Generator",
+        "slug": "ai-golden-path-generator"
+      },
+      {
+        "num": 45,
+        "name": "AI Pull Request Infrastructure Reviewer",
+        "slug": "ai-pull-request-infrastructure-reviewer"
+      },
+      {
+        "num": 12,
+        "name": "AI Deployment Troubleshooting Agent",
+        "slug": "ai-deployment-troubleshooting-agent"
+      }
+    ],
+    "diagram": "┌────────────────────────────────────────────────────┐\n│ Registry + code + telemetry merge                  │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Lifecycle classification per flag                  │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Kill-switch drill proposals                        │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼  ← staging only\n┌────────────────────────────────────────────────────┐\n│ Cleanup PRs (code + config)                        │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Expiry governance + renewal prompts                │\n└────────────────────────────────────────────────────┘",
+    "schema": "{\n  \"flag\": \"checkout-new-pricing\",\n  \"state\": \"dormant\",\n  \"evidence\": {\"created\": \"2024-03-02\", \"last_evaluated\": \"2025-11-18\", \"code_refs\": 4, \"evaluations_90d\": 0},\n  \"exposure\": {\"segments\": [\"internal-dogfood\"], \"envs\": [\"staging\", \"prod\"]},\n  \"actions\": [\n    {\"kind\": \"kill_switch_drill\", \"status\": \"proposed\", \"where\": \"staging\"},\n    {\"kind\": \"removal_pr\", \"status\": \"drafted\", \"pr\": \"PR-889\", \"note\": \"removes default-off path + 2 env keys\"}\n  ],\n  \"owner\": \"@checkout-team\",\n  \"expires\": \"2024-06-02 (overdue 860d)\"\n}"
+  },
+  {
+    "num": 68,
+    "slug": "ai-iac-test-generator",
+    "name": "AI IaC Test Generator",
+    "area": "IaC",
+    "tldr": "Give your Terraform modules real tests: generated Terratest/OPA cases from module semantics and past incidents, running in CI like any other code.",
+    "complexity": "Medium",
+    "automation": "Assistive",
+    "problem_intro": "Infrastructure code ships with less test coverage than a weekend hobby project — modules get 'reviewed' but rarely executed, and regressions surface as plan surprises in production.",
+    "problem": [
+      "IaC modules are consumed by dozens of stacks; a change can pass review and break every consumer.",
+      "Writing Terratest/OPA/tflint tests is unglamorous specialist work, so modules go untested.",
+      "Existing tests drift from module evolution, testing yesterday's interface.",
+      "Teams lack a pattern for what to test: outputs, idempotency, downgrade, tagging, encryption settings."
+    ],
+    "impact": "Untested IaC turns every module change into a fleet-wide experiment — the exact opposite of what infrastructure-as-code promised.",
+    "capabilities": [
+      [
+        "Contract extraction",
+        "reads module inputs/outputs/lifecycle to derive what must hold true for consumers"
+      ],
+      [
+        "Test synthesis",
+        "generates Terratest/OPA/Conftest cases: happy path, idempotency, tagging, encryption, downgrade safety"
+      ],
+      [
+        "Incident-informed cases",
+        "adds regression tests from past incidents touching the module (idea 55's drift history)"
+      ],
+      [
+        "Fixture management",
+        "generates minimal, cheap test fixtures (localstack, test accounts, short-lived resources)"
+      ],
+      [
+        "Maintenance",
+        "updates tests when module interfaces evolve; deletes tests for dead paths"
+      ]
+    ],
+    "solution": "A test engineer for IaC: pointed at a module, it extracts the contract, drafts a test suite matched to consumer expectations and incident history, wires it into CI with cost-bounded fixtures, and keeps the suite current as the module changes. Output is ordinary test code in the module repo — no magic runtime, just tests your team owns.",
+    "steps": [
+      [
+        "Analyze",
+        "module contract: variables, outputs, resources, and consumer usage patterns"
+      ],
+      [
+        "Design",
+        "test matrix: invariants, security posture, idempotency, upgrade/downgrade"
+      ],
+      [
+        "Generate",
+        "test code + fixtures with cost and time bounds per run"
+      ],
+      [
+        "Wire",
+        "CI integration with PR gating and scheduled full runs"
+      ],
+      [
+        "Maintain",
+        "interface changes update tests; failures feed back as new cases"
+      ]
+    ],
+    "hitl": "Generated tests are reviewed like code; the test matrix is confirmed with the module owner before CI gating is enabled.",
+    "components": [
+      [
+        "Contract analyzer",
+        "module semantics and cross-stack consumer usage"
+      ],
+      [
+        "Test synthesizer",
+        "framework-specific test code generation"
+      ],
+      [
+        "Fixture provider",
+        "cost-bounded test environments and teardown guarantees"
+      ],
+      [
+        "CI integrator",
+        "gating rules, scheduling, flake-quarantine hooks (idea 52)"
+      ]
+    ],
+    "flow": [
+      "The analyzer reads the module and how consumers actually use it.",
+      "A test matrix is proposed: what must hold, what incidents taught, what's cheap to run.",
+      "Generated tests and fixtures land as reviewable code with CI wiring.",
+      "Module evolution updates the suite; new failure modes become new cases."
+    ],
+    "platforms": [
+      [
+        "Cost-efficient model tiers",
+        "GPT-5 Mini/Nano · Claude Haiku 4.5 · Gemini Flash · DeepSeek V4 · Mistral Small",
+        "high-volume events (every failure, every alert) at a fraction of frontier cost"
+      ],
+      [
+        "Frontier cloud models",
+        "OpenAI GPT-5.x · Anthropic Claude Opus/Sonnet 4.x · Google Gemini 3 Pro · xAI Grok · Z.ai GLM",
+        "deep reasoning over the assembled context; strongest for root-cause analysis and fix suggestions"
+      ],
+      [
+        "AI coding agents (human-invoked)",
+        "Claude Code · OpenAI Codex · GitHub Copilot coding agent · Cursor · Cline · OpenHands",
+        "author the suggested fix as a reviewed pull request"
+      ],
+      [
+        "AI observability & evaluation",
+        "Langfuse · Arize Phoenix · LangSmith · W&B Weave · OpenTelemetry GenAI conventions · promptfoo",
+        "tracing of every model and tool call, cost/latency tracking, prompt regression evals"
+      ]
+    ],
+    "integrations": [
+      [
+        "Terraform / OpenTofu / Terragrunt",
+        "module parsing and plan execution"
+      ],
+      [
+        "Terratest / OPA / Conftest / tflint",
+        "test and check frameworks"
+      ],
+      [
+        "LocalStack / test accounts",
+        "cheap fixtures"
+      ],
+      [
+        "GitHub Actions / GitLab CI",
+        "gating and scheduling"
+      ]
+    ],
+    "context": [
+      "module source and history",
+      "consumer stack usage",
+      "past incidents and drift touching the module",
+      "org conventions (tagging, encryption, naming)",
+      "test-account constraints"
+    ],
+    "tools": [
+      "Read tier: repos, module registries, incident history",
+      "Write tier: PR creation for tests; test-account resources with strict teardown"
+    ],
+    "benefits": [
+      "Module changes verified by execution before touching consumers.",
+      "Every fleet-wide module gets a real safety net, not just review.",
+      "Incidents stop repeating: regression tests arrive with the fix.",
+      "Test costs bounded by design: fixtures are cheap and always torn down."
+    ],
+    "security": [
+      "Generated tests must not become backdoors: they pass the same review and secret-scanning as product code.",
+      "Test credentials are scoped to disposable accounts; teardown is mandatory and verified.",
+      "Module analysis stays in-boundary; no proprietary module code leaves the environment."
+    ],
+    "future": [
+      "Policy tests cross-wired with guardrails (idea 60): the same invariants checked twice.",
+      "Consumer-driven contracts for infrastructure: stacks assert what they need from modules.",
+      "Upgrade simulations: run the suite against provider version bumps automatically."
+    ],
+    "related": [
+      {
+        "num": 3,
+        "name": "AI Terraform Reviewer",
+        "slug": "ai-terraform-reviewer"
+      },
+      {
+        "num": 23,
+        "name": "AI IaC Security Analyzer",
+        "slug": "ai-iac-security-analyzer"
+      },
+      {
+        "num": 21,
+        "name": "AI Terraform Plan Explainer",
+        "slug": "ai-terraform-plan-explainer"
+      },
+      {
+        "num": 55,
+        "name": "AI Drift Detective",
+        "slug": "ai-drift-detective"
+      }
+    ],
+    "diagram": "┌────────────────────────────────────────────────────┐\n│ Module contract analysis                           │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Test matrix design (with owner)                    │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Test + fixture generation                          │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ CI wiring (PR gate + schedule)                     │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Maintenance on interface change                    │\n└────────────────────────────────────────────────────┘",
+    "variations": [
+      "Start OPA/Conftest-only (plan-time assertions) before full Terratest execution.",
+      "Golden-module program: apply generation to the highest-consumption modules first."
+    ],
+    "schema": "{\n  \"module\": \"terraform-aws-s3-secure-bucket\",\n  \"consumers\": 23,\n  \"test_matrix\": [\n    {\"case\": \"encryption + versioning defaults enforced\", \"framework\": \"terratest\", \"cost\": \"~$0.01/run\"},\n    {\"case\": \"idempotent re-apply (no diff)\", \"framework\": \"terratest\", \"cost\": \"~$0.02/run\"},\n    {\"case\": \"public-access block cannot be disabled\", \"framework\": \"opa/conftest\"},\n    {\"case\": \"regression: INC-8102 tag propagation\", \"framework\": \"terratest\", \"source\": \"incident history\"}\n  ],\n  \"ci\": {\"pr_gate\": \"plan + opa + terratest@short\", \"schedule\": \"nightly full\"},\n  \"generated_files\": [\"tests/module_test.go\", \"tests/fixtures/main.tf\", \"policies/opa/s3.rego\"]\n}"
+  },
+  {
+    "num": 69,
+    "slug": "ai-performance-regression-sentinel",
+    "name": "AI Performance Regression Sentinel",
+    "area": "CI/CD",
+    "tldr": "Catch performance regressions in CI, not in production: continuous benchmark tracking, statistical gating, and automated bisection when something gets slower.",
+    "complexity": "Medium",
+    "automation": "Assistive",
+    "problem_intro": "Performance regressions don't fail tests — they ship. Latency and throughput degrade a few percent per change until someone notices a quarter later.",
+    "problem": [
+      "Benchmarks run ad hoc; results live in spreadsheets or someone's terminal scrollback.",
+      "Noise vs. regression is a statistics problem teams hand-wave: is 4% slower on one run a real regression?",
+      "When a regression is detected, finding the culprit commit means manual git-bisect pain.",
+      "Performance budgets exist as intentions, not gates."
+    ],
+    "impact": "Users experience performance as the product; regressions shipped silently are the slowest, most expensive kind of bug to find later.",
+    "capabilities": [
+      [
+        "Benchmark management",
+        "consistent, reproducible benchmark runs in CI with environment metadata"
+      ],
+      [
+        "Statistical gating",
+        "change-point detection and confidence-aware comparisons — no single-run verdicts"
+      ],
+      [
+        "Regression bisection",
+        "when a threshold trips, bisects the window and names the culprit commit with evidence"
+      ],
+      [
+        "Budget authoring",
+        "performance budgets per endpoint and scenario as code, wired into PR checks"
+      ],
+      [
+        "Scenario generation",
+        "proposes missing benchmark scenarios for hot paths found in production traces (idea 63)"
+      ]
+    ],
+    "solution": "A performance gate for CI: benchmarks run on a schedule and on PRs touching hot paths, results land in a time-series store with statistical gating (noise-aware, confidence-scored), and regressions trigger automated bisection. Budgets live as code next to the tests; the sentinel files its findings as PR checks and issues with evidence, not vibes.",
+    "steps": [
+      [
+        "Instrument",
+        "define and collect benchmark scenarios and environments per service"
+      ],
+      [
+        "Track",
+        "store results as time series with commit, environment, and hardware metadata"
+      ],
+      [
+        "Gate",
+        "statistical comparison on PRs: regression, improvement, or noise"
+      ],
+      [
+        "Bisect",
+        "on gate failure, narrow the culprit commit automatically"
+      ],
+      [
+        "Report",
+        "trends per service; budgets as code reviewed with the team"
+      ]
+    ],
+    "hitl": "Gates block with evidence; overriding is explicit and logged. The sentinel diagnoses — humans decide whether a tradeoff is worth it.",
+    "components": [
+      [
+        "Benchmark runner",
+        "deterministic execution with environment pinning"
+      ],
+      [
+        "Results store",
+        "time-series of scores with metadata"
+      ],
+      [
+        "Statistics engine",
+        "change-point detection, confidence scoring, noise models"
+      ],
+      [
+        "Bisector",
+        "commit-window narrowing with per-commit runs"
+      ]
+    ],
+    "flow": [
+      "Hot paths get benchmark scenarios derived from production traffic shape.",
+      "PRs touching those paths get a statistical verdict, not a single-run panic.",
+      "Real regressions trigger bisection that names the commit and the delta.",
+      "Budgets and trends make performance a reviewed, visible property."
+    ],
+    "platforms": [
+      [
+        "Cost-efficient model tiers",
+        "GPT-5 Mini/Nano · Claude Haiku 4.5 · Gemini Flash · DeepSeek V4 · Mistral Small",
+        "high-volume events (every failure, every alert) at a fraction of frontier cost"
+      ],
+      [
+        "Frontier cloud models",
+        "OpenAI GPT-5.x · Anthropic Claude Opus/Sonnet 4.x · Google Gemini 3 Pro · xAI Grok · Z.ai GLM",
+        "deep reasoning over the assembled context; strongest for root-cause analysis and fix suggestions"
+      ],
+      [
+        "AI observability & evaluation",
+        "Langfuse · Arize Phoenix · LangSmith · W&B Weave · OpenTelemetry GenAI conventions · promptfoo",
+        "tracing of every model and tool call, cost/latency tracking, prompt regression evals"
+      ],
+      [
+        "Model routing & AI gateways",
+        "LiteLLM · OpenRouter · Portkey · Kong AI Gateway · Cloudflare AI Gateway",
+        "provider-agnostic routing with fallbacks, budgets, caching, and audit logs"
+      ]
+    ],
+    "integrations": [
+      [
+        "Benchmark tools (k6, wrk, JMH, pytest-benchmark)",
+        "execution adapters"
+      ],
+      [
+        "GitHub Actions / GitLab CI",
+        "PR checks and scheduled runs"
+      ],
+      [
+        "Prometheus / Grafana",
+        "production hot-path evidence"
+      ],
+      [
+        "GitHub",
+        "checks, issues, bisection reports"
+      ]
+    ],
+    "context": [
+      "benchmark results with metadata",
+      "PR diff and hot-path mapping",
+      "production traffic shape",
+      "hardware/runner characteristics",
+      "historical regressions and fixes"
+    ],
+    "tools": [
+      "Read tier: CI, repos, production metrics",
+      "Write tier: PR checks, issues; benchmark runs in isolated environments"
+    ],
+    "benefits": [
+      "Regressions caught at PR time with confidence levels, not vibes.",
+      "Culprit commits named automatically; fixing starts at the right diff.",
+      "Performance budgets become enforced code, not aspirations.",
+      "Trend lines make gradual decay visible before users feel it."
+    ],
+    "security": [
+      "Benchmarks run on synthetic data in isolated environments — no production data in CI performance runs.",
+      "The results store is internal; benchmark metadata can reveal stack detail."
+    ],
+    "future": [
+      "Load-shape realism: benchmarks driven by sampled production traffic profiles.",
+      "Cost-per-request tracking alongside latency for efficiency budgets.",
+      "Cross-service budgets: end-to-end latency split across hops with team ownership."
+    ],
+    "related": [
+      {
+        "num": 52,
+        "name": "AI Flaky Test Detective",
+        "slug": "ai-flaky-test-detective"
+      },
+      {
+        "num": 10,
+        "name": "AI Test Failure Analyzer",
+        "slug": "ai-test-failure-analyzer"
+      },
+      {
+        "num": 11,
+        "name": "AI Build Optimization Assistant",
+        "slug": "ai-build-optimization-assistant"
+      },
+      {
+        "num": 8,
+        "name": "AI Deployment Risk Analyzer",
+        "slug": "ai-deployment-risk-analyzer"
+      }
+    ],
+    "diagram": "┌────────────────────────────────────────────────────┐\n│ Benchmark scenarios + environments                 │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Continuous result collection                       │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Statistical gate on PRs                            │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼  ← noise-aware\n┌────────────────────────────────────────────────────┐\n│ Automated bisection on regression                  │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Budgets + trend reports                            │\n└────────────────────────────────────────────────────┘",
+    "schema": "{\n  \"service\": \"checkout-api\",\n  \"scenario\": \"checkout_flow_p95\",\n  \"verdict\": \"regression\",\n  \"statistics\": {\"baseline_p95_ms\": 612, \"candidate_p95_ms\": 738, \"delta_pct\": 20.6, \"confidence\": 0.97, \"runs\": 12},\n  \"bisection\": {\"window\": [\"9f2c1e\", \"44b0aa\"], \"culprit\": \"44b0aa (orders client: sync retry added)\", \"evidence\": \"each commit benched 3x\"},\n  \"budget\": {\"file\": \"perf/budgets.yaml\", \"limit_p95_ms\": 700, \"status\": \"exceeded\"},\n  \"action\": \"PR check failed with evidence; override requires perf-owner sign-off\"\n}"
+  },
+  {
+    "num": 70,
+    "slug": "ai-capacity-forecasting-assistant",
+    "name": "AI Capacity Forecasting Assistant",
+    "area": "Cloud",
+    "tldr": "See the capacity wall before you hit it: forecasts of compute, storage, and quota headroom from trend data, with what-if planning for growth and events.",
+    "complexity": "Medium",
+    "automation": "Assistive",
+    "problem_intro": "Capacity planning is either over-provisioned fear or under-provisioned surprise; the trend data that predicts the wall already exists in your metrics.",
+    "problem": [
+      "Quotas and limits (cloud, k8s, IP space, service limits) sit invisible until a launch or scale event collides with them.",
+      "Linear extrapolation is wrong: growth is seasonal, stepwise (customer onboarding), and workload-shaped.",
+      "Autoscaling hides exhaustion: headroom shrinks quietly while the system 'works fine'.",
+      "Procurement and reservation decisions need months of lead time; alerts fire minutes before impact."
+    ],
+    "impact": "The wall is always further away than panic suggests and closer than comfort assumes — forecasting turns it into a scheduled engineering task.",
+    "capabilities": [
+      [
+        "Trend forecasting",
+        "per-resource growth models from historical usage with seasonality and step functions"
+      ],
+      [
+        "Quota inventory",
+        "current limits vs. forecast demand across cloud accounts, regions, and clusters"
+      ],
+      [
+        "What-if planning",
+        "model launches, migrations, and marketing events against headroom before committing"
+      ],
+      [
+        "Reservation guidance",
+        "when to buy committed-use and savings plans based on stable baseline vs. spiky demand"
+      ],
+      [
+        "Early warnings",
+        "exhaustion-ETA alerts with lead time matched to procurement reality (weeks, not minutes)"
+      ]
+    ],
+    "solution": "A forecasting service over metrics and cloud quota APIs: it models demand per resource (compute, storage, IP, connections, quotas), reports headroom and time-to-exhaustion with confidence bands, and simulates what-if scenarios (2x customers, new region, decommissioning). Output drives real decisions — quota increases, reservations, node-group plans — tracked as tickets with the evidence attached.",
+    "steps": [
+      [
+        "Inventory",
+        "enumerate resources, quotas, and limits across accounts and clusters"
+      ],
+      [
+        "Model",
+        "fit demand trends per resource with seasonality and growth shape"
+      ],
+      [
+        "Forecast",
+        "headroom and exhaustion ETAs with confidence bands"
+      ],
+      [
+        "Simulate",
+        "what-if scenarios: growth, events, migrations, decommissions"
+      ],
+      [
+        "Advise",
+        "quota, reservation, and node-group actions as tickets with evidence"
+      ]
+    ],
+    "hitl": "Forecasts inform quarterly planning and procurement; humans decide purchases and architecture. The assistant owns the math, not the money.",
+    "components": [
+      [
+        "Inventory collector",
+        "usage metrics plus cloud and k8s quota/limit APIs"
+      ],
+      [
+        "Forecast engine",
+        "trend models with seasonality; explicit uncertainty"
+      ],
+      [
+        "Scenario simulator",
+        "what-if arithmetic against the modeled baseline"
+      ],
+      [
+        "Advisor",
+        "actions ranked by lead time and risk, exported to tickets"
+      ]
+    ],
+    "flow": [
+      "The collector merges usage telemetry with the true limit inventory.",
+      "Models fit per resource; exhaustion dates come with confidence, not false precision.",
+      "What-ifs answer planning questions before commitments are made.",
+      "Recommendations land as tickets where procurement and platform work happens."
+    ],
+    "platforms": [
+      [
+        "Cost-efficient model tiers",
+        "GPT-5 Mini/Nano · Claude Haiku 4.5 · Gemini Flash · DeepSeek V4 · Mistral Small",
+        "high-volume events (every failure, every alert) at a fraction of frontier cost"
+      ],
+      [
+        "Frontier cloud models",
+        "OpenAI GPT-5.x · Anthropic Claude Opus/Sonnet 4.x · Google Gemini 3 Pro · xAI Grok · Z.ai GLM",
+        "deep reasoning over the assembled context; strongest for root-cause analysis and fix suggestions"
+      ],
+      [
+        "AI observability & evaluation",
+        "Langfuse · Arize Phoenix · LangSmith · W&B Weave · OpenTelemetry GenAI conventions · promptfoo",
+        "tracing of every model and tool call, cost/latency tracking, prompt regression evals"
+      ],
+      [
+        "Model routing & AI gateways",
+        "LiteLLM · OpenRouter · Portkey · Kong AI Gateway · Cloudflare AI Gateway",
+        "provider-agnostic routing with fallbacks, budgets, caching, and audit logs"
+      ]
+    ],
+    "integrations": [
+      [
+        "Cloud quota & billing APIs",
+        "AWS / Azure / GCP service quotas and usage"
+      ],
+      [
+        "Prometheus / cloud metrics",
+        "demand history"
+      ],
+      [
+        "Kubernetes metrics & node groups",
+        "cluster headroom"
+      ],
+      [
+        "Jira / Linear",
+        "capacity tickets and planning review"
+      ],
+      [
+        "Grafana",
+        "headroom dashboards"
+      ]
+    ],
+    "context": [
+      "usage history per resource",
+      "quota and limit inventory",
+      "growth plans and events (launches, contracts)",
+      "seasonality patterns",
+      "past exhaustion incidents"
+    ],
+    "tools": [
+      "Read-only: metrics, quota APIs, billing exports",
+      "Write tier: ticket filing; no quota changes or purchases"
+    ],
+    "benefits": [
+      "Exhaustion becomes an ETA on a dashboard, not a 3am surprise.",
+      "What-if answers before commitments: launches sized correctly the first time.",
+      "Spend shaped by data: reservations sized to stable baselines, not fear.",
+      "Quota increases requested weeks ahead, on evidence."
+    ],
+    "security": [
+      "Usage and billing data is business-sensitive: keep forecasting in-boundary; share only aggregated outputs.",
+      "Advice is advisory: no automated quota changes or purchases, ever."
+    ],
+    "future": [
+      "Coupling with cost analytics (idea 26): headroom priced in dollars per scenario.",
+      "Autoscaler-aware modeling that treats HPA/Karpenter behavior as part of the system.",
+      "Cross-team capacity ledger for shared platforms, using topology (idea 63) as the demand graph."
+    ],
+    "related": [
+      {
+        "num": 29,
+        "name": "AI Cloud Resource Optimization Assistant",
+        "slug": "ai-cloud-resource-optimization-assistant"
+      },
+      {
+        "num": 26,
+        "name": "AI Cloud Cost Analysis Assistant",
+        "slug": "ai-cloud-cost-analysis-assistant"
+      },
+      {
+        "num": 18,
+        "name": "AI HPA Recommendation Assistant",
+        "slug": "ai-hpa-recommendation-assistant"
+      },
+      {
+        "num": 57,
+        "name": "AI SLO & Error Budget Assistant",
+        "slug": "ai-slo-error-budget-assistant"
+      }
+    ],
+    "diagram": "┌────────────────────────────────────────────────────┐\n│ Resource + quota inventory                         │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Demand modeling per resource                       │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Headroom + exhaustion ETAs                         │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼  ← confidence bands\n┌────────────────────────────────────────────────────┐\n│ What-if scenario simulation                        │\n└────────────────────────────────────────────────────┘\n                          │\n                          ▼\n┌────────────────────────────────────────────────────┐\n│ Advice to tickets with evidence                    │\n└────────────────────────────────────────────────────┘",
+    "variations": [
+      "Start spreadsheet-simple: scheduled quota inventory + linear trend report, then add models.",
+      "Vendor capacity tools (cloud-native forecasters) as data sources; AI for the planning layer."
+    ],
+    "schema": "{\n  \"resource\": \"aws:vpc-ips:prod-eu\",\n  \"current\": {\"limit\": 64512, \"used\": 58100, \"headroom_pct\": 9.9},\n  \"forecast\": {\"exhaustion_eta\": \"2026-12-08\", \"confidence\": 0.85, \"model\": \"linear + onboarding steps\"},\n  \"drivers\": [\"new cluster join in November (+2k IPs)\", \"EKS pod-density growth 3%/wk\"],\n  \"what_if\": [{\"scenario\": \"black-friday 2x\", \"exhaustion_eta\": \"2026-11-21\"}],\n  \"advice\": {\"action\": \"request CIDR expansion / second VPC\", \"lead_time\": \"3-4 weeks\", \"ticket\": \"INFRA-5012\"}\n}"
   }
 ];
