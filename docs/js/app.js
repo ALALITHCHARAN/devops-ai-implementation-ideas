@@ -375,7 +375,7 @@
     if (prefersReducedMotion || !("IntersectionObserver" in window)) return;
     var targets = document.querySelectorAll(
       ".hero-badges, .hero .display, .hero-sub, .hero-actions, .terminal, " +
-      ".section-head, .hairline-grid, .catalog-toolbar, .cta, .marquee, .demo-terminal, .atlas-grid"
+      ".section-head, .hairline-grid, .catalog-toolbar, .author-card, .cta, .marquee, .demo-terminal, .atlas-grid"
     );
     var observer = new IntersectionObserver(function (entries) {
       entries.forEach(function (entry) {

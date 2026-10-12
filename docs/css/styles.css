@@ -359,6 +359,7 @@ button {
 
 .hero .display { max-width: 19ch; }
 
+.teal,
 .hero .display .teal { color: var(--color-butler-teal); }
 
 .hero-sub {
@@ -1306,6 +1307,207 @@ mark {
 
 @media (max-width: 520px) {
   .atlas-cell::after { display: none; }
+}
+
+/* ---- Author section ---- */
+
+.author-box {
+  margin-top: 16px;
+}
+
+.author-card {
+  background: var(--color-white);
+  border: 1px solid var(--color-rule-gray);
+  border-radius: var(--radius-lg);
+  padding: 36px;
+  display: grid;
+  grid-template-columns: auto 1fr 310px;
+  gap: 32px;
+  align-items: start;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.author-avatar-wrap {
+  position: relative;
+  width: 112px;
+  height: 112px;
+  flex-shrink: 0;
+}
+
+.author-avatar {
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--color-white);
+  box-shadow: 0 0 0 1px var(--color-rule-gray), 0 8px 24px -4px rgba(0, 0, 0, 0.12);
+  background: var(--color-paper);
+  display: block;
+}
+
+.author-avatar-badge {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--color-white);
+  border: 2px solid var(--color-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.author-avatar-badge .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-butler-teal);
+}
+
+.author-details {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.author-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.author-identity {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.author-name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--color-ink);
+  line-height: 1.1;
+}
+
+.author-handle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-geist-mono);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-deep-teal);
+  text-decoration: none;
+  padding: 3px 10px;
+  background: var(--color-aqua-mist);
+  border: 1px solid var(--color-outline-aqua);
+  border-radius: var(--radius-sm);
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.author-handle:hover {
+  background: var(--color-butler-teal);
+  border-color: var(--color-butler-teal);
+  color: var(--color-white);
+}
+
+.author-role-badge .badge {
+  font-size: 12px;
+}
+
+.author-bio {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--color-deep-graphite);
+}
+
+.author-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.a-tag {
+  font-family: var(--font-geist-mono);
+  font-size: 11px;
+  color: var(--color-warm-gray);
+  border: 1px solid var(--color-rule-gray);
+  border-radius: var(--radius-badge);
+  padding: 4px 10px;
+  background: var(--color-paper);
+}
+
+.author-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.author-terminal {
+  border-radius: var(--radius-sm);
+  background: var(--color-white);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--color-rule-gray);
+  overflow: hidden;
+}
+
+.author-terminal .terminal-chrome {
+  padding: 8px 12px;
+  background: #f7f6f5;
+  border-bottom: 1px solid var(--color-rule-gray);
+}
+
+.author-terminal .terminal-body {
+  padding: 16px 18px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  background: var(--color-charcoal);
+  white-space: nowrap;
+}
+
+@media (max-width: 1060px) {
+  .author-card {
+    grid-template-columns: auto 1fr;
+    gap: 28px;
+  }
+  .author-terminal {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 640px) {
+  .author-card {
+    grid-template-columns: 1fr;
+    padding: 24px 20px;
+    gap: 20px;
+  }
+  .author-avatar-wrap {
+    margin: 0 auto;
+  }
+  .author-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .author-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+  .author-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 /* ---- Teal conversion card ---- */
