@@ -517,15 +517,14 @@ button {
 
 .hairline-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1px;
-  background: var(--color-rule-gray);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  background: var(--color-paper);
   border: 1px solid var(--color-rule-gray);
   border-radius: var(--radius-sm);
   overflow: hidden;
 }
 
-@media (max-width: 900px) { .hairline-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 900px) { .hairline-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 600px) { .hairline-grid { grid-template-columns: 1fr; } }
 
 .tile {
@@ -534,6 +533,7 @@ button {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  box-shadow: inset -1px 0 0 0 var(--color-rule-gray), inset 0 -1px 0 0 var(--color-rule-gray);
 }
 
 .tile .icon {
@@ -765,19 +765,21 @@ mark {
 
 .cards-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1px;
-  background: var(--color-rule-gray);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  background: var(--color-paper);
   border: 1px solid var(--color-rule-gray);
   border-radius: var(--radius-sm);
   overflow: hidden;
 }
 
-@media (max-width: 980px) { .cards-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 980px) { .cards-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 640px) { .cards-grid { grid-template-columns: 1fr; } }
 
 /* Blank cell padding the last row of the 3-column grid */
-.card-filler { background: var(--color-paper); }
+.card-filler {
+  background: var(--color-paper);
+  box-shadow: inset -1px 0 0 0 var(--color-rule-gray), inset 0 -1px 0 0 var(--color-rule-gray);
+}
 @media (max-width: 980px) { .card-filler { display: none; } }
 
 .card {
@@ -790,6 +792,7 @@ mark {
   gap: 12px;
   min-height: 208px;
   transition: background 0.15s ease;
+  box-shadow: inset -1px 0 0 0 var(--color-rule-gray), inset 0 -1px 0 0 var(--color-rule-gray);
 }
 
 .card:hover { background: var(--color-white); }
@@ -856,14 +859,18 @@ mark {
 
 .card-meta {
   display: flex;
-  gap: 12px;
+  align-items: center;
+  gap: 8px;
   font-family: var(--font-geist-mono);
   font-size: 11px;
   color: var(--color-steel);
 }
 
-.card-meta span::before { content: "· "; color: var(--color-rule-gray); }
-.card-meta span:first-child::before { content: ""; }
+.card-meta span + span::before {
+  content: "\00b7";
+  margin-right: 8px;
+  color: var(--color-warm-gray);
+}
 
 /* Index (list) view */
 
